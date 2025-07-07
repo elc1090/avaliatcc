@@ -20,7 +20,7 @@ const GeneratePDF = class {
             "MINISTÉRIO DA EDUCAÇÃO\n",
             "UNIVERSIDADE FEDERAL DE SANTA MARIA\n",
             "CENTRO DE TECNOLOGIA\n",
-            "CURSO DE CIÊNCIA DA COMPUTAÇÃO\n",
+            "CURSO DE SISTEMAS DE INFORMAÇÃO\n",
             "\n\n\n"
           ],
           style: "header"
@@ -54,30 +54,33 @@ const GeneratePDF = class {
                     {text: "Nota", style: "tableHeader", noWrap: true}
                   ],
                   [
-                    {text: "Apresentação: conteúdo (máx 2,0)", style: "tableBody"},
+                    {text: "Apresentação: conteúdo (máx 1,0)", style: "tableBody"},
                     {text: data.evaluation.presentationRubric1, style: "tableBody"}
                   ],
                   [
-                    {text: "Apresentação: utilização do tempo e poder de síntese (máx 1,0)", style: "tableBody"},
+                    {text: "Apresentação: domínio dos recursos didáticos (máx 1,0)", style: "tableBody"},
                     {text: data.evaluation.presentationRubric2, style: "tableBody"}
-                  ],
+                  ],                  
                   [
-                    {text: "Relatório: estrutura do trabalho (máx 1,0)", style: "tableBody"},
+                    {text: "Apresentação: utilização do tempo e poder de síntese (máx 1,0)", style: "tableBody"},
                     {text: data.evaluation.presentationRubric3, style: "tableBody"}
                   ],
                   [
-                    {text: "Relatório: relevância, originalidade e qualidade do conteúdo do texto (máx 3,0)", style: "tableBody"},
+                    {text: "Relatório: estrutura do trabalho (máx 1,0)", style: "tableBody"},
                     {text: data.evaluation.presentationRubric4, style: "tableBody"}
                   ],
                   [
-                    {text: "Relatório: grau de conhecimento demonstrado no trabalho escrito (máx 2,0)", style: "tableBody"},
+                    {text: "Relatório: relevância, originalidade e qualidade do conteúdo do texto (máx 3,0)", style: "tableBody"},
                     {text: data.evaluation.presentationRubric5, style: "tableBody"}
                   ],
                   [
-                    {text: "Relatório: adequação da bibliografia apresentada (máx 1,0)", style: "tableBody"},
+                    {text: "Relatório: grau de conhecimento demonstrado no trabalho escrito (máx 2,0)", style: "tableBody"},
                     {text: data.evaluation.presentationRubric6, style: "tableBody"}
                   ],
-
+                  [
+                    {text: "Relatório: adequação da bibliografia apresentada (máx 1,0)", style: "tableBody"},
+                    {text: data.evaluation.presentationRubric7, style: "tableBody"}
+                  ],
                   [
                     {text: "Total (nota da sessão de defesa)", style: "tableBody"},
                     {text: data.evaluation.finalValue, style: "tableBody"}
@@ -159,7 +162,8 @@ const GeneratePDF = class {
         presentationRubric3: Number($(`#presentationRubric3Value`).text()),
         presentationRubric4: Number($(`#presentationRubric4Value`).text()),
         presentationRubric5: Number($(`#presentationRubric5Value`).text()),
-        presentationRubric6: Number($(`#presentationRubric6Value`).text()),        
+        presentationRubric6: Number($(`#presentationRubric6Value`).text()),
+        presentationRubric7: Number($(`#presentationRubric7Value`).text()),              
         finalValue: Number($(`#finalValue`).text())
       },
       signature: signature.getSignatureImage()

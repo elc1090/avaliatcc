@@ -33,7 +33,7 @@
 
 <div class="container">
   <h3 class="bold">Avaliação de Defesa de Trabalho de Graduação</h3>
-  <h4 class="bold">Ciência da Computação / UFSM</h4>
+  <h4 class="bold">Sistemas de Informação / UFSM</h4>
   <form id="evaluationForm" action="javascript:" onsubmit="generatePDF.open()" onreset="resetAllFields()">
 
     <section id="generalInformation" class="section card card-panel">
@@ -145,23 +145,24 @@
 
 
         <div class="range-field col s12 mt-1 mb-1">
-          <label for="presentationRubric1" class="black-text">Apresentação: conteúdo (máx 2,0): </label>
+          <label for="presentationRubric1" class="black-text">Apresentação: conteúdo (máx 1,0): </label>
           <span id="presentationRubric1Value" class="black-text bold"></span>
-          <input class="mt-3" type="range" id="presentationRubric1" name="presentationRubric1" min="0" max="2"
+          <input class="mt-3" type="range" id="presentationRubric1" name="presentationRubric1" min="0" max="1"
                  step="0.1"/>
           <span id="presentationRubric1Error" class="red-text"></span>
         </div>
 
         <div class="range-field col s12 mt-1 mb-1">
-          <label for="presentationRubric2" class="black-text">Apresentação: utilização do tempo e poder de síntese (máx 1,0): </label>
+          <label for="presentationRubric2" class="black-text">Apresentação: domínio dos recursos didáticos (máx 1,0): </label>
           <span id="presentationRubric2Value" class="black-text bold"></span>
           <input class="mt-3" type="range" id="presentationRubric2" name="presentationRubric2" min="0" max="1"
                  step="0.1"/>
           <span id="presentationRubric2Error" class="red-text"></span>
         </div>
-
+        
+        
         <div class="range-field col s12 mt-1 mb-1">
-          <label for="presentationRubric3" class="black-text">Relatório: estrutura do trabalho (máx 1,0): </label>
+          <label for="presentationRubric3" class="black-text">Apresentação: utilização do tempo e poder de síntese (máx 1,0): </label>
           <span id="presentationRubric3Value" class="black-text bold"></span>
           <input class="mt-3" type="range" id="presentationRubric3" name="presentationRubric3" min="0" max="1"
                  step="0.1"/>
@@ -169,27 +170,35 @@
         </div>
 
         <div class="range-field col s12 mt-1 mb-1">
-          <label for="presentationRubric4" class="black-text">Relatório: relevância, originalidade e qualidade do conteúdo do texto (máx 3,0): </label>
+          <label for="presentationRubric4" class="black-text">Relatório: estrutura do trabalho (máx 1,0): </label>
           <span id="presentationRubric4Value" class="black-text bold"></span>
-          <input class="mt-3" type="range" id="presentationRubric4" name="presentationRubric4" min="0" max="3"
+          <input class="mt-3" type="range" id="presentationRubric4" name="presentationRubric4" min="0" max="1"
                  step="0.1"/>
           <span id="presentationRubric4Error" class="red-text"></span>
         </div>
 
         <div class="range-field col s12 mt-1 mb-1">
-          <label for="presentationRubric5" class="black-text">Relatório: grau de conhecimento demonstrado no trabalho escrito (máx 2,0): </label>
+          <label for="presentationRubric5" class="black-text">Relatório: relevância, originalidade e qualidade do conteúdo do texto (máx 3,0): </label>
           <span id="presentationRubric5Value" class="black-text bold"></span>
-          <input class="mt-3" type="range" id="presentationRubric5" name="presentationRubric5" min="0" max="2"
+          <input class="mt-3" type="range" id="presentationRubric5" name="presentationRubric5" min="0" max="3"
                  step="0.1"/>
           <span id="presentationRubric5Error" class="red-text"></span>
         </div>
 
         <div class="range-field col s12 mt-1 mb-1">
-          <label for="presentationRubric6" class="black-text">Relatório: adequação da bibliografia apresentada (máx 1,0): </label>
+          <label for="presentationRubric6" class="black-text">Relatório: grau de conhecimento demonstrado no trabalho escrito (máx 2,0): </label>
           <span id="presentationRubric6Value" class="black-text bold"></span>
-          <input class="mt-3" type="range" id="presentationRubric6" name="presentationRubric6" min="0" max="1"
+          <input class="mt-3" type="range" id="presentationRubric6" name="presentationRubric6" min="0" max="2"
                  step="0.1"/>
           <span id="presentationRubric6Error" class="red-text"></span>
+        </div>
+
+        <div class="range-field col s12 mt-1 mb-1">
+          <label for="presentationRubric7" class="black-text">Relatório: adequação da bibliografia apresentada (máx 1,0): </label>
+          <span id="presentationRubric7Value" class="black-text bold"></span>
+          <input class="mt-3" type="range" id="presentationRubric7" name="presentationRubric7" min="0" max="1"
+                 step="0.1"/>
+          <span id="presentationRubric7Error" class="red-text"></span>
         </div>
 
 
@@ -197,7 +206,6 @@
       <div class="row">
         <label for="finalValue" class="black-text">Nota total da sessão de defesa: </label>
         <span id="finalValue" class="black-text bold"></span>
-        <p>Obs.: De acordo com as <a href="https://www.ufsm.br/app/uploads/sites/425/2025/04/Normas-Internas-TGs.pdf">normas</a>, a nota da sessão de defesa representa 70% da nota final. Os 30% restantes correspondem à nota do andamento, que aconteceu anteriormente. </p>
 
       </div>
     </section>

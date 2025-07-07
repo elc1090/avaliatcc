@@ -123,7 +123,7 @@ $(document).ready(function () {
 
 
 
-  $('#presentationRubric1, #presentationRubric2, #presentationRubric3, #presentationRubric4, #presentationRubric5, #presentationRubric6').change((e) => {
+  $('#presentationRubric1, #presentationRubric2, #presentationRubric3, #presentationRubric4, #presentationRubric5, #presentationRubric6, #presentationRubric7').change((e) => {
     const elementId = e.target.id
     const value = $(`#${elementId} + .thumb .value`).text()
     $(`#${elementId}Value`).text(value)
@@ -159,6 +159,7 @@ const calculateFinalValue = () => {
   const presentationRubric4 = $(`#presentationRubric4Value`).text()
   const presentationRubric5 = $(`#presentationRubric5Value`).text()
   const presentationRubric6 = $(`#presentationRubric6Value`).text()
+  const presentationRubric7 = $(`#presentationRubric7Value`).text()
 
   const currentTimestamp = Date.now()
 
@@ -169,7 +170,8 @@ const calculateFinalValue = () => {
       Number(presentationRubric3) +
       Number(presentationRubric4) +
       Number(presentationRubric5) +
-      Number(presentationRubric6) 
+      Number(presentationRubric6) +
+      Number(presentationRubric7)
     $(`#finalValue`).text(finalValue.toFixed(1))
     
   // }
@@ -195,6 +197,7 @@ const resetAllFields = () => {
   $(`#presentationRubric4`).text("")
   $(`#presentationRubric5`).text("")
   $(`#presentationRubric6`).text("")
+  $(`#presentationRubric7`).text("")  
   $(`#finalValue`).text("")
 
   signature.clearCanvas()
