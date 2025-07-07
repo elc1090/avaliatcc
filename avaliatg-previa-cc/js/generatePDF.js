@@ -54,19 +54,19 @@ const GeneratePDF = class {
                     {text: "Nota", style: "tableHeader", noWrap: true}
                   ],
                   [
-                    {text: "Conteúdo da apresentação", style: "tableBody"},
+                    {text: "Relevância e originalidade (máx 2,0)", style: "tableBody"},
                     {text: data.evaluation.presentationRubric1, style: "tableBody"}
                   ],
                   [
-                    {text: "Domínio dos recursos didáticos", style: "tableBody"},
+                    {text: "Qualidade do conteúdo (máx 3,0)", style: "tableBody"},
                     {text: data.evaluation.presentationRubric2, style: "tableBody"}
                   ],
                   [
-                    {text: "Utilização do tempo e poder de síntese", style: "tableBody"},
+                    {text: "Apresentação (máx 5,0)", style: "tableBody"},
                     {text: data.evaluation.presentationRubric3, style: "tableBody"}
                   ],
                   [
-                    {text: "Nota de andamento", style: "tableBody"},
+                    {text: "Total (nota de andamento)", style: "tableBody"},
                     {text: data.evaluation.finalValue, style: "tableBody"}
                   ]
                 ],
@@ -180,9 +180,14 @@ const GeneratePDF = class {
     if ($('#evaluationForm').valid()) {
       const data = this.getData();
       const pdfDocGenerator = pdfMake.createPdf(this.getDefinition(data));
-  
+
+      const student = data.generalInformation.studentName.trim().split(/\s+/)[0];
+      const professor = data.generalInformation.professorName.trim().split(/\s+/)[0];
+      
+      const pdfFilename = `ficha-avaliacao-tcc-${student}-prof-${professor}.pdf`;
+
       pdfDocGenerator.getBlob(async (blob) => {
-        const file = new File([blob], 'ficha-avaliacao-tcc.pdf', { type: 'application/pdf' });
+        const file = new File([blob], pdfFilename, { type: 'application/pdf' });
   
         if (navigator.canShare && navigator.canShare({ files: [file] })) {
           try {

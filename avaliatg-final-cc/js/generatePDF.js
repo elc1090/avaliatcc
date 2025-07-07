@@ -1,0 +1,222 @@
+const GeneratePDF = class {
+
+  static {
+    pdfMake.fonts = {
+      Times: {
+        normal: 'Times-Roman',
+        bold: 'Times-Bold',
+        italics: 'Times-Italic',
+        bolditalics: 'Times-BoldItalic'
+      }
+    }
+  }
+
+  getDefinition = (data) => {
+    return {
+      pageMargins: 70,
+      content: [
+        {
+          text: [
+            "MINISTÉRIO DA EDUCAÇÃO\n",
+            "UNIVERSIDADE FEDERAL DE SANTA MARIA\n",
+            "CENTRO DE TECNOLOGIA\n",
+            "CURSO DE CIÊNCIA DA COMPUTAÇÃO\n",
+            "\n\n\n"
+          ],
+          style: "header"
+        },
+        {
+          text: ["FICHA DE AVALIAÇÃO DE TRABALHO DE GRADUAÇÃO\n", 
+                 "SESSÃO PÚBLICA DE DEFESA\n","\n\n\n"],
+          style: "title"
+        },
+        {
+          text: [
+            `${data.generalInformation.period}º Semestre\n`,            
+            `Estudante: ${data.generalInformation.studentName}\n`,
+            `Avaliador(a): ${data.generalInformation.professorName}\n`,
+            `Data: ${data.generalInformation.date}\n`,
+            `Horário: ${data.generalInformation.time}\n`,
+            "\n\n"
+          ],
+          style: "normal"
+        },
+        {
+          columns: [
+            {width: "*", text: ""},
+            {
+              width: "auto",
+              table: {
+                headerRows: 1,
+                body: [
+                  [
+                    {text: "Critério", style: "tableHeader", noWrap: true},
+                    {text: "Nota", style: "tableHeader", noWrap: true}
+                  ],
+                  [
+                    {text: "Apresentação: conteúdo (máx 2,0)", style: "tableBody"},
+                    {text: data.evaluation.presentationRubric1, style: "tableBody"}
+                  ],
+                  [
+                    {text: "Apresentação: utilização do tempo e poder de síntese (máx 1,0)", style: "tableBody"},
+                    {text: data.evaluation.presentationRubric2, style: "tableBody"}
+                  ],
+                  [
+                    {text: "Relatório: estrutura do trabalho (máx 1,0)", style: "tableBody"},
+                    {text: data.evaluation.presentationRubric3, style: "tableBody"}
+                  ],
+                  [
+                    {text: "Relatório: relevância, originalidade e qualidade do conteúdo do texto (máx 3,0)", style: "tableBody"},
+                    {text: data.evaluation.presentationRubric4, style: "tableBody"}
+                  ],
+                  [
+                    {text: "Relatório: grau de conhecimento demonstrado no trabalho escrito (máx 2,0)", style: "tableBody"},
+                    {text: data.evaluation.presentationRubric5, style: "tableBody"}
+                  ],
+                  [
+                    {text: "Relatório: adequação da bibliografia apresentada (máx 1,0)", style: "tableBody"},
+                    {text: data.evaluation.presentationRubric6, style: "tableBody"}
+                  ],
+
+                  [
+                    {text: "Total (nota da sessão de defesa)", style: "tableBody"},
+                    {text: data.evaluation.finalValue, style: "tableBody"}
+                  ]
+                ],
+                alignment: "center"
+              }
+            },
+            {width: "*", text: ""},
+          ]
+        },
+        {text: "\n\n", style: "normal"},
+        {
+          image: data.signature,
+          width: 150,
+          style: "center"
+        },
+        {
+          text: [
+            "___________________________________\n",
+            "Avaliador(a)"
+          ],
+          style: "center"
+        }
+      ],
+      styles: {
+        header: {
+          font: "Times",
+          fontSize: 12,
+          alignment: "center",
+          lineHeight: 1.5
+        },
+        title: {
+          font: "Times",
+          fontSize: 14,
+          bold: true,
+          alignment: "center",
+          lineHeight: 1.5
+        },
+        normal: {
+          font: "Times",
+          fontSize: 12,
+          alignment: "justify",
+          lineHeight: 1.5
+        },
+        tableHeader: {
+          font: "Times",
+          fontSize: 12,
+          bold: true,
+          margin: 5
+        },
+        tableBody: {
+          font: "Times",
+          fontSize: 12,
+          margin: 5
+        },
+        center: {
+          font: "Times",
+          fontSize: 12,
+          alignment: "center",
+          lineHeight: 1.5
+        }
+      }
+    }
+  }
+
+  getData = () => {
+    return {
+      generalInformation: {
+        studentName: $('#studentName').val(),
+        professorName: $('#professorName').val(),
+        period: $('input[name=period]:checked').val(),
+        date: $('#date').val(),
+        time: $('#time').val()
+      },
+      evaluation: {
+        presentationRubric1: Number($(`#presentationRubric1Value`).text()),
+        presentationRubric2: Number($(`#presentationRubric2Value`).text()),
+        presentationRubric3: Number($(`#presentationRubric3Value`).text()),
+        presentationRubric4: Number($(`#presentationRubric4Value`).text()),
+        presentationRubric5: Number($(`#presentationRubric5Value`).text()),
+        presentationRubric6: Number($(`#presentationRubric6Value`).text()),        
+        finalValue: Number($(`#finalValue`).text())
+      },
+      signature: signature.getSignatureImage()
+    }
+
+
+  }
+  downloadBlob = (blob, filename) => {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);    
+  }
+
+
+
+  // open = () => {
+  //   if ($('#evaluationForm').valid()) {
+  //     const data = this.getData()
+  //     pdfMake.createPdf(this.getDefinition(data)).open();
+  //   }
+  // }
+
+  open = async () => {
+    if ($('#evaluationForm').valid()) {
+      const data = this.getData();
+      const pdfDocGenerator = pdfMake.createPdf(this.getDefinition(data));
+  
+      const student = data.generalInformation.studentName.trim().split(/\s+/)[0];
+      const professor = data.generalInformation.professorName.trim().split(/\s+/)[0];
+      
+      const pdfFilename = `ficha-avaliacao-tcc-${student}-prof-${professor}.pdf`;
+
+      pdfDocGenerator.getBlob(async (blob) => {
+        const file = new File([blob], pdfFilename, { type: 'application/pdf' });
+  
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          try {
+            await navigator.share({
+              title: 'Ficha de Avaliação de Defesa de TCC',
+              text: 'Segue o PDF gerado.',
+              files: [file]
+            });
+          } catch (error) {
+            console.warn("Sharing failed, falling back to download", error);
+            this.downloadBlob(blob, file.name);
+          }
+        } else {
+          this.downloadBlob(blob, file.name);
+        }
+      });
+    }
+  }
+  
+
+}

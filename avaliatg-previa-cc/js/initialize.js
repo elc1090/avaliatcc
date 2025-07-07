@@ -162,10 +162,10 @@ const calculateFinalValue = () => {
 
   
   // if (presentationRubric1 && presentationRubric2 && presentationRubric3 && contentRubric1 && contentRubric2 && contentRubric3 && contentRubric4) {
-    const finalValue = Number(presentationRubric1) +
-      Number(presentationRubric2) +
-      Number(presentationRubric3) 
-    $(`#finalValue`).text(finalValue.toFixed(1))
+  const finalValue = Number(presentationRubric1) +
+    Number(presentationRubric2) +
+    Number(presentationRubric3) 
+  $(`#finalValue`).text(finalValue.toFixed(1))
     
   // }
   // if (relevanceAndOriginality && contentQuality && presentation) {
