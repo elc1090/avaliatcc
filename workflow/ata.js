@@ -13,7 +13,9 @@
  function longDate(value){const m=/^(\d{4})-(\d\d)-(\d\d)$/.exec(value);if(!m)return '[data]';const [,y,mo,d]=m;const months=['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];return `${Number(d)} de ${months[Number(mo)-1]} de ${y}`;}
  function setExaminers(list){const target=$('examiners');target.replaceChildren();for(const person of list)addExaminer(person.name||person);}
  function addExaminer(name=''){
-  const n=$('examiners').children.length; if(n>=10)return;
+  const target = $('examiners');
+  const n = target.children.length;
+  if(n>=10)return;
   const row=document.createElement('div');row.className='examiner-row';
   const label=document.createElement('label');label.textContent=n?'Membro examinador '+(n+1):'Avaliador 1 · orientador(a) e presidente';
   const input=document.createElement('input');input.className='examiner-name';input.required=true;input.value=name;input.placeholder='Nome completo';label.append(input);row.append(label);
