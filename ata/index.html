@@ -1,57 +1,35 @@
 <!doctype html>
-<html lang="pt-BR">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="referrer" content="no-referrer">
-  <title>Ata de defesa · Avalia TG</title>
-  <link rel="stylesheet" href="../workflow/ata.css?v=4b">
-  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script defer src="../workflow/config.js?v=4b"></script>
-  <script defer src="../workflow/ata.js?v=4b"></script>
-</head>
-<body>
-<main class="shell">
-  <nav><a href="../">← Formulários Avalia TG</a><span>UFSM · Trabalho de Graduação</span></nav>
-  <header><div class="eyebrow">Documento de defesa</div><h1>Ata de apresentação de Trabalho de Graduação</h1><p>Preencha as informações, confira a prévia e gere a ata em PDF. O PDF é preparado no navegador. Sem convite, você pode baixá-lo localmente; com convite válido, pode enviar a ata diretamente ao Drive do responsável. Assinaturas ausentes exigem confirmação explícita.</p></header>
-  <form id="ataForm" novalidate>
-    <section class="card" aria-labelledby="h-general"><h2 id="h-general"><span class="number">01</span> Informações do trabalho</h2>
-      <div class="grid">
-        <label class="wide">Título do trabalho <input name="tituloTrabalho" required maxlength="400" autocomplete="off" placeholder="Título completo"></label>
-        <label>Curso <select name="curso" id="curso" required><option value="Ciência da Computação">Ciência da Computação</option><option value="Sistemas de Informação">Sistemas de Informação</option></select></label>
-        <label>Nome do(a) estudante <input name="nomeAluno" required maxlength="160"></label>
-      </div>
-    </section>
-    <section class="card" aria-labelledby="h-banca"><h2 id="h-banca"><span class="number">02</span> Banca examinadora</h2>
-      <div class="grid">
-        <label class="wide">Professor(a) orientador(a) <input name="nomeProfessor" required maxlength="160"></label>
-        <label>Primeiro(a) avaliador(a) <input name="nomeAvaliador1" required maxlength="160"></label>
-        <label>Segundo(a) avaliador(a) <input name="nomeAvaliador2" required maxlength="160"></label>
-      </div>
-    </section>
-    <section class="card" aria-labelledby="h-sessao"><h2 id="h-sessao"><span class="number">03</span> Sessão e resultado</h2>
-      <div class="grid">
-        <label>Data da defesa <input type="date" name="data" required></label>
-        <label>Horário <input type="time" name="hora" required></label>
-        <label>Sala ou local <input name="sala" required maxlength="140" placeholder="Ex.: Sala 401 / Videoconferência"></label>
-        <label>Data limite para entrega da versão definitiva <input type="date" name="dataFim" required></label>
-        <label>Nota final (0 a 10) <input name="notaFinal" inputmode="decimal" placeholder="Ex.: 9,20" aria-describedby="notaHint"><small id="notaHint">Para CC, a nota pode permanecer em branco, conforme a ata anterior.</small></label>
-      </div>
-    </section>
-    <section class="card" aria-labelledby="h-ass"><h2 id="h-ass"><span class="number">04</span> Assinaturas <span class="optional">(recomendadas)</span></h2>
-      <p class="subtle">Desenhe com o mouse ou dedo, ou selecione uma imagem da assinatura. As quatro assinaturas são importantes para a documentação oficial. Se alguma estiver ausente, você deverá confirmar explicitamente antes de baixar ou enviar o PDF. Campos sem assinatura terão apenas a linha correspondente.</p>
-      <div class="sign-grid">
-        <div class="sign-box" data-role="orientador"><h3>Orientador(a)</h3><canvas aria-label="Desenhar assinatura do orientador"></canvas><div class="sign-actions"><label class="file-action">Selecionar imagem <input type="file" accept="image/png,image/jpeg,image/webp" aria-label="Imagem da assinatura do orientador"></label><button type="button" class="clear">Limpar</button></div><span class="sign-hint">Sem assinatura</span></div>
-        <div class="sign-box" data-role="avaliador1"><h3>Avaliador(a) 1</h3><canvas aria-label="Desenhar assinatura do primeiro avaliador"></canvas><div class="sign-actions"><label class="file-action">Selecionar imagem <input type="file" accept="image/png,image/jpeg,image/webp" aria-label="Imagem da assinatura do avaliador 1"></label><button type="button" class="clear">Limpar</button></div><span class="sign-hint">Sem assinatura</span></div>
-        <div class="sign-box" data-role="avaliador2"><h3>Avaliador(a) 2</h3><canvas aria-label="Desenhar assinatura do segundo avaliador"></canvas><div class="sign-actions"><label class="file-action">Selecionar imagem <input type="file" accept="image/png,image/jpeg,image/webp" aria-label="Imagem da assinatura do avaliador 2"></label><button type="button" class="clear">Limpar</button></div><span class="sign-hint">Sem assinatura</span></div>
-        <div class="sign-box" data-role="estudante"><h3>Estudante</h3><canvas aria-label="Desenhar assinatura do estudante"></canvas><div class="sign-actions"><label class="file-action">Selecionar imagem <input type="file" accept="image/png,image/jpeg,image/webp" aria-label="Imagem da assinatura do estudante"></label><button type="button" class="clear">Limpar</button></div><span class="sign-hint">Sem assinatura</span></div>
-      </div>
-    </section>
-    <section class="card output"><h2>Documento</h2><p class="subtle">A ata é gerada no formato PDF. Confira a versão final antes de encaminhá-la à secretaria.</p>
-      <div id="status" role="status" aria-live="polite"></div>
-      <div class="buttons"><button type="button" id="copyLink" class="secondary">Copiar link com dados preenchidos</button><button type="reset" class="secondary">Limpar formulário</button><button type="button" id="preview" class="primary">Visualizar PDF</button><button type="button" id="download" class="primary">Baixar PDF</button><button type="button" id="sendAta" class="primary" hidden disabled>Enviar ata ao Drive</button></div>
-      <iframe id="pdfViewer" title="Prévia da ata gerada" hidden></iframe>
-    </section>
-  </form><footer>Produção local de documento · Avalia TG</footer>
-</main>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ata de defesa · Avalia TG</title>
+<link rel="stylesheet" href="../workflow/ata.css?v=5"><link rel="stylesheet" href="../workflow/dialog.css?v=5">
+</head><body>
+<main class="ata-layout">
+<a href="../index.html" class="back">← Todos os formulários</a>
+<header><span class="eyebrow">UFSM · Trabalho de Conclusão de Curso</span><h1>Ata de defesa</h1><p>Preencha os dados, gere e revise o texto. O PDF não precisa de assinaturas neste aplicativo: será assinado posteriormente no PEN-SIE.</p></header>
+<div id="ataStatus" role="status" aria-live="polite" class="notice"></div>
+<form id="ataForm" autocomplete="on">
+<section class="card"><h2>Trabalho e sessão</h2><div class="grid">
+<label class="wide">Título do trabalho<input name="title" id="title" required maxlength="450"></label>
+<label>Estudante<input name="studentName" id="studentName" required></label>
+<label>Curso<select name="course" id="course"><option>Ciência da Computação</option><option>Sistemas de Informação</option></select></label>
+<label>Data da defesa<input type="date" name="date" id="date" required></label>
+<label>Horário<input type="time" name="time" id="time" required></label>
+<label>Modalidade<select name="defenseMode" id="defenseMode"><option>Presencial</option><option>Videoconferência</option></select></label>
+<label>Sala ou plataforma<input name="location" id="location" required placeholder="Ex.: sala 132 / Google Meet"></label>
+</div></section>
+<section class="card"><h2>Resultado e prazo</h2><div class="grid">
+<label>Resultado<select name="outcome" id="outcome"><option value="aprovado(a)">Aprovado(a)</option><option value="reprovado(a)">Reprovado(a)</option></select></label>
+<label>Prazo para a versão definitiva<input type="date" name="deadline" id="deadline"></label>
+</div><p class="hint" id="gradeHint">Se todas as avaliações tiverem sido recebidas, a nota será inserida automaticamente no texto. Caso contrário, você poderá preenchê-la manualmente.</p></section>
+<section class="card"><h2>Banca examinadora</h2><p class="hint">Avaliador 1 é o(a) orientador(a) e presidente da banca. Os nomes serão apresentados ao final da ata.</p><div id="examiners"></div><button type="button" class="quiet" id="addExaminer">+ Adicionar examinador</button></section>
+<section class="card"><div class="title-row"><div><h2>Texto da ata</h2><p class="hint">Edite livremente antes de gerar o PDF. Alterar os dados acima não substitui o texto já editado.</p></div><button type="button" class="quiet" id="generateText">Gerar / atualizar texto</button></div>
+<label for="narrative" class="sr-only">Texto editável da ata</label><textarea id="narrative" spellcheck="true" rows="12" placeholder="Clique em ‘Gerar texto’ para começar."></textarea>
+<p class="hint">O título e os nomes da banca são formatados separadamente no PDF. A nota aparece dentro do texto editável.</p></section>
+<section class="card"><h2>Documento</h2><p class="hint">A prévia pode não aparecer em alguns celulares. O botão Baixar PDF funciona de forma independente.</p>
+<div class="actions"><button type="button" id="preview" class="quiet">Visualizar PDF</button><button type="button" id="download" class="primary">Baixar PDF</button><button type="button" id="sendAta" class="primary" hidden disabled>Enviar ata ao Drive</button></div>
+<iframe id="pdfViewer" hidden title="Prévia da ata" class="pdfviewer"></iframe>
+</section>
+</form></main>
+<script src="../avaliatg-final-cc/js/pdfmake/pdfmake.min.js"></script><script src="../avaliatg-final-cc/js/pdfmake/vfs_fonts.js"></script>
+<script src="../workflow/config.js?v=5"></script><script src="../workflow/dialog.js?v=5"></script><script src="../workflow/ata.js?v=5"></script>
 </body></html>

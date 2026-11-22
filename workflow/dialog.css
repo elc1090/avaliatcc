@@ -1,0 +1,10 @@
+.av-dialog{width:min(92vw,510px);border:0;border-radius:18px;padding:0;box-shadow:0 25px 80px #101a3380;background:#fff;color:#17243d;max-height:85vh}
+.av-dialog::backdrop{background:#101e39a6}
+.av-dialog-body{padding:28px;display:grid;gap:16px}
+.av-dialog h2{font:600 1.35rem/1.3 system-ui,sans-serif;margin:0}
+.av-dialog p{font:1rem/1.6 system-ui,sans-serif;white-space:pre-line;margin:0}
+.av-dialog-actions{display:flex;justify-content:flex-end;flex-wrap:wrap;gap:12px}
+.av-dialog-actions button{border:1px solid #16476a;border-radius:9px;padding:10px 17px;font:600 .95rem system-ui;cursor:pointer}
+.av-dialog-primary{background:#153f6b;color:white}.av-dialog-secondary{background:white;color:#153f6b}
+.av-dialog-spinner{height:28px;width:28px;border-radius:50%;border:3px solid #d5e5e8;border-top-color:#07848c;animation:av-spin .7s linear infinite}
+@keyframes av-spin{to{transform:rotate(360deg)}}

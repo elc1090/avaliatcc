@@ -14,7 +14,7 @@
   let form, sliders, status, review, frame, reviewDownload, sendBtn, primary, canvas, ctx, preview, signatureFile;
   let signatureType = '', signatureReady = false, signatureRead = 0, drawing = false, busy = false, consumed = false;
   let previousDisabled = new Map();
-  let revision = 0, pdfBlob = null, pdfUrl = '', pdfName = '', integratedDocs = []; 
+  let revision = 0, pdfBlob = null, pdfUrl = '', pdfName = '', integratedDocs = [], currentGrade=null; 
   const selected = new Set();
 
   // The original GeneratePDF.getData() uses a global signature object.
@@ -23,9 +23,11 @@
   const blankSignature = (()=>{const c=document.createElement('canvas');c.width=2;c.height=2;return c.toDataURL('image/png');})();
   function signed(){return (signatureType==='DRAW'&&hasInk())||(signatureType==='SELECT'&&signatureReady);}
   window.signature = {getSignatureImage: () => signed() ? (signatureType==='DRAW'?canvas.toDataURL('image/png'):preview.getAttribute('src')) : blankSignature};
-  function confirmUnsigned(){
+  async function confirmUnsigned(){
     if(signed())return true;
-    return window.confirm('ASSINATURA AUSENTE\n\nA assinatura do(a) avaliador(a) é importante e normalmente exigida para a documentação oficial.\n\nDeseja continuar e gerar o PDF SEM assinatura? Você poderá precisar assiná-lo posteriormente.\n\nCancelar = voltar ao formulário.\nOK = continuar sem assinatura.');
+    return await window.AvaliaDialog.confirm('Assinatura não informada',
+      'A assinatura é importante para a documentação oficial. Deseja prosseguir sem assinar? O documento poderá precisar ser assinado posteriormente.',
+      'Continuar sem assinatura','Voltar e assinar');
   }
   function text(id, value) { const el=$id(id); if(el) el.textContent=value; }
   function message(value, kind='info') { if(!status) return;status.textContent=value;status.dataset.kind=kind;const local=review?.querySelector('[data-status]');if(local){local.textContent=value;local.dataset.kind=kind;} }
@@ -34,7 +36,7 @@
     if(pdfUrl)URL.revokeObjectURL(pdfUrl);pdfUrl='';pdfBlob=null;
     if(frame)frame.removeAttribute('src'); if(review)review.hidden=true; if(sendBtn)sendBtn.disabled=true;
   }
-  function invalidate() { revision++; if(integrated){for(const doc of integratedDocs)if(doc.previewUrl)URL.revokeObjectURL(doc.previewUrl);integratedDocs=[];const panel=$id('integratedDownloads');if(panel){panel.hidden=true;panel.replaceChildren();}if(review)review.hidden=true;} if(!consumed&&pdfBlob){releasePdf();message('O formulário foi alterado. Gere um novo PDF para enviar.');} }
+  function invalidate() { revision++; currentGrade=null; if(integrated){for(const doc of integratedDocs)if(doc.previewUrl)URL.revokeObjectURL(doc.previewUrl);integratedDocs=[];const panel=$id('integratedDownloads');if(panel){panel.hidden=true;panel.replaceChildren();}if(review)review.hidden=true;} if(!consumed&&pdfBlob){releasePdf();message('O formulário foi alterado. Gere um novo PDF para enviar.');} }
   function setBusy(value) {
     if(value && !busy){previousDisabled=new Map();form.querySelectorAll('input,button,textarea,select').forEach(el=>{previousDisabled.set(el,el.disabled);el.disabled=true;});}
     if(!value && busy){previousDisabled.forEach((was,el)=>{el.disabled=consumed&&el!==reviewDownload?true:was;});previousDisabled.clear();}
@@ -175,7 +177,7 @@
   }
   function makeBlob(definition){return new Promise((resolve,reject)=>{const timer=setTimeout(()=>reject(new Error('Tempo limite ao gerar PDF.')),30000);const done=b=>{clearTimeout(timer);resolve(b);};const fail=e=>{clearTimeout(timer);reject(e);};try{const result=pdfMake.createPdf(definition).getBlob(done);if(result&&typeof result.catch==='function')result.catch(fail);}catch(e){fail(e);}});}
   async function generate(e,target='both') {
-    e.preventDefault();if(busy||consumed||!validate(target)||!confirmUnsigned())return;
+    e.preventDefault();if(busy||consumed||!validate(target)||!(await confirmUnsigned()))return;
     if(managed&&integrated&&target!=='both'){message('Este convite exige as duas fichas. Use “Revisar as duas fichas”.','error');return;}
     releasePdf();for(const doc of integratedDocs)if(doc.previewUrl)URL.revokeObjectURL(doc.previewUrl);integratedDocs=[];setBusy(true);message('Gerando PDF…');const snapshot=revision;
     try {
@@ -185,7 +187,7 @@
           const data={generalInformation:{studentName:$id('studentName').value,professorName:$id('professorName').value,period:form.querySelector('input[name=period]:checked').value,date:$id(isP?'previaDate':'date').value,time:$id(isP?'previaTime':'time').value},evaluation:{},signature:window.signature.getSignatureImage()};
           group.forEach((el,i)=>data.evaluation['presentationRubric'+(i+1)]=Number(el.value));data.evaluation.finalValue=group.reduce((sum,el)=>sum+Math.round(Number(el.value)*10),0)/10;
           const gen=isP?new GeneratePreviaPDF():new GeneratePDF();const blob=await makeBlob(gen.getDefinition(data));
-          const name='ficha-avaliacao-'+(isP?'andamento':'defesa')+'-'+filePart(data.generalInformation.studentName)+'-prof-'+filePart(data.generalInformation.professorName)+'.pdf';docs.push({blob,name});}
+          const name='ficha-avaliacao-'+(isP?'andamento':'defesa')+'-'+filePart(data.generalInformation.studentName)+'-prof-'+filePart(data.generalInformation.professorName)+'.pdf';docs.push({blob,name,grade:data.evaluation.finalValue});}
         if(snapshot!==revision)return;
         const panel=$id('integratedDownloads');panel.replaceChildren();panel.hidden=false;
         for(const doc of docs){const link=document.createElement('button');link.type='button';link.className='btn-flat indigo-text';link.textContent='Baixar '+doc.name;link.addEventListener('click',()=>download(doc.blob,doc.name));panel.append(link);}
@@ -195,7 +197,7 @@
           review.hidden=false;
           const previews=review.querySelector('[data-integrated-preview]');previews.replaceChildren();
           for(const doc of integratedDocs){const heading=document.createElement('h6');heading.textContent=doc.part==='previa'?'Ficha de andamento':'Ficha de defesa';
-            const iframe=document.createElement('iframe');iframe.className='workflow-pdf';iframe.title='Prévia da '+heading.textContent;iframe.src=URL.createObjectURL(doc.blob);doc.previewUrl=iframe.src;previews.append(heading,iframe);}
+            const iframe=document.createElement('iframe');iframe.className='workflow-pdf';iframe.title='Prévia da '+heading.textContent;iframe.src=URL.createObjectURL(doc.blob);doc.previewUrl=iframe.src;const dl=document.createElement('button');dl.type='button';dl.className='btn-flat indigo-text';dl.textContent='Baixar PDF';dl.addEventListener('click',()=>download(doc.blob,doc.name));previews.append(heading,dl,iframe);}
           message('Duas fichas prontas. Confira os documentos e envie ambas.');review.scrollIntoView({block:'start',behavior:'smooth'});return;
         }
         if(docs.length===1)download(docs[0].blob,docs[0].name);
@@ -208,7 +210,7 @@
       const name='ficha-avaliacao-tcc-'+filePart(data.generalInformation.studentName)+'-prof-'+filePart(data.generalInformation.professorName)+'.pdf';
       if(!managed){await standalone(blob,name);message(invitation?'PDF gerado localmente. O envio direto não está disponível.':'PDF gerado.');return;}
       if(blob.size>maxPdf){download(blob,name);message('O PDF excede 5 MB e não pode ser enviado. Reduza a imagem da assinatura.','error');return;}
-      pdfBlob=blob;pdfName=name;pdfUrl=URL.createObjectURL(blob);frame.src=pdfUrl;review.hidden=false;message('PDF pronto. Confira os dados e envie a avaliação.');review.scrollIntoView({block:'start',behavior:'smooth'});
+      pdfBlob=blob;pdfName=name;currentGrade=Number(data.evaluation.finalValue);pdfUrl=URL.createObjectURL(blob);frame.src=pdfUrl;review.hidden=false;message('PDF pronto. Confira os dados e envie a avaliação.');review.scrollIntoView({block:'start',behavior:'smooth'});
     }catch(err){console.error(err);message('Não foi possível gerar o PDF. Confira a assinatura e tente novamente.','error');}
     finally{setBusy(false);}
   }
@@ -222,27 +224,27 @@
   }
   function submitRemote(payload){return api({...payload,action:'submit',form:formCode});}
   async function send() {
-    if(busy||consumed||!(integrated?integratedDocs.length===2:pdfBlob)||!confirmUnsigned())return;
-    setBusy(true);message(integrated?'Enviando as duas fichas. Mantenha esta página aberta…':'Enviando PDF. Mantenha esta página aberta…');const blob=pdfBlob;
+    if(busy||consumed||!(integrated?integratedDocs.length===2:pdfBlob)||!(await confirmUnsigned()))return;
+    setBusy(true);message(integrated?'Enviando as duas fichas…':'Enviando PDF…');window.AvaliaDialog.progress('Enviando ao Drive','Mantenha esta página aberta até a confirmação.');const blob=pdfBlob;
     if(integrated){
       try{
         let finalReceipt='';
         for(const doc of integratedDocs){
-          message('Enviando ficha de '+(doc.part==='previa'?'andamento':'defesa')+'…');
-          const response=await submitRemote({token:boot.token,part:doc.part,pdf:await toBase64(doc.blob)});
+          message('Enviando ficha de '+(doc.part==='previa'?'andamento':'defesa')+'…');window.AvaliaDialog.update('Enviando ficha de '+(doc.part==='previa'?'andamento':'defesa')+'…');
+          const response=await submitRemote({token:boot.token,part:doc.part,pdf:await toBase64(doc.blob),grade:doc.grade});
           if(!['part_received','received','already_received'].includes(response?.status))throw new Error(response?.message||'Resposta não confirmada.');
           finalReceipt=response.receipt;
-          if(response.status==='already_received'){consumed=true;message('Convite já utilizado. Os arquivos anteriormente recebidos foram preservados. Recibo: '+response.receipt,'success');return;}
+          if(response.status==='already_received'){consumed=true;message('Convite já utilizado. Recibo: '+response.receipt,'success');window.AvaliaDialog.result('Convite já utilizado','Arquivos recebidos anteriormente. Recibo: '+response.receipt);return;}
           if(doc.part==='final'&&response.status!=='received')throw new Error('A conclusão dos dois arquivos não foi confirmada.');
         }
-        consumed=true;sendBtn.textContent='Duas fichas recebidas';message('As duas avaliações foram recebidas. Recibo: '+finalReceipt,'success');
-      }catch(e){message('Envio não confirmado: '+(e?.message||'')+' Clique em “Enviar as duas fichas” novamente para retomar; arquivos já recebidos não serão duplicados.','error');}
+        consumed=true;sendBtn.textContent='Duas fichas recebidas';message('As duas avaliações foram recebidas. Recibo: '+finalReceipt,'success');window.AvaliaDialog.result('Duas fichas recebidas','Os dois PDFs foram armazenados no Drive. Recibo: '+finalReceipt);
+      }catch(e){message('Envio não confirmado: '+(e?.message||'')+' Clique em “Enviar as duas fichas” novamente para retomar; arquivos já recebidos não serão duplicados.','error');window.AvaliaDialog.result('Recebimento não confirmado','Você pode tentar novamente. Os arquivos recebidos não serão duplicados. '+(e?.message||''),false);}
       finally{setBusy(false);}return;
     }
-    try{const result=await submitRemote({token:boot.token,pdf:await toBase64(blob)});if(!['received','already_received'].includes(result?.status))throw new Error('Resposta não confirmada.');
+    try{const result=await submitRemote({token:boot.token,pdf:await toBase64(blob),grade:currentGrade});if(!['received','already_received'].includes(result?.status))throw new Error('Resposta não confirmada.');
       consumed=true;form.querySelectorAll('input,button,textarea').forEach(el=>{if(el!==reviewDownload)el.disabled=true;});
-      if(sendBtn)sendBtn.textContent='Avaliação recebida';if(result.status==='already_received'&&reviewDownload)reviewDownload.textContent='Baixar PDF local (não enviado)';message((result.status==='received'?'Avaliação recebida com sucesso.':'Este convite já foi utilizado. A avaliação anteriormente recebida foi preservada.')+' Recibo: '+result.receipt,'success');
-    }catch(e){message('O recebimento não foi confirmado. '+(e?.message||'')+' Você pode tentar novamente ou baixar uma cópia.','error');}
+      window.AvaliaDialog.result('Avaliação recebida','O PDF foi armazenado no Drive. Recibo: '+result.receipt);if(sendBtn)sendBtn.textContent='Avaliação recebida';if(result.status==='already_received'&&reviewDownload)reviewDownload.textContent='Baixar PDF local (não enviado)';message((result.status==='received'?'Avaliação recebida com sucesso.':'Este convite já foi utilizado. A avaliação anteriormente recebida foi preservada.')+' Recibo: '+result.receipt,'success');
+    }catch(e){message('O recebimento não foi confirmado. '+(e?.message||'')+' Você pode tentar novamente ou baixar uma cópia.','error');window.AvaliaDialog.result('Recebimento não confirmado','Você pode tentar novamente ou baixar uma cópia. '+(e?.message||''),false);}
     finally{setBusy(false);}
   }
   async function copyLink(){
@@ -268,17 +270,18 @@
     if(!window.M||!window.jQuery||!window.pdfMake||typeof GeneratePDF==='undefined'||(integrated&&typeof GeneratePreviaPDF==='undefined')){message('Não foi possível carregar as bibliotecas necessárias. Recarregue a página.','error');primary.disabled=true;return;}
     const jq=window.jQuery;
     if(invitation){
-      message('Verificando convite…');primary.disabled=true;
+      message('Verificando convite…');window.AvaliaDialog.progress('Carregando convite','Consultando os dados da avaliação…');primary.disabled=true;
       try{const result=await api({action:'validate',token,form:formCode});
         if(result.status==='valid'){boot={...result,token};managed=true;}
         else if(['invalid','expired','already_received','wrong_form'].includes(result.status)){
           message(result.message||(result.status==='already_received'?'Avaliação já recebida. Recibo: '+result.receipt:'Convite indisponível.'),'error');
-          Array.from(form.children).forEach(el=>{if(el!==status)el.hidden=true;});return;
+          window.AvaliaDialog.close();Array.from(form.children).forEach(el=>{if(el!==status)el.hidden=true;});return;
         }else throw new Error('Resposta não confirmada.');
       }catch(e){message('Não foi possível verificar o convite. Você pode preencher e baixar o PDF normalmente e encaminhá-lo à orientação. Para tentar o envio direto, recarregue a página.','error');}
     }
+    if(invitation)window.AvaliaDialog.close();
     if(!managed){jq('.datepicker').datepicker({format:'dd/mm/yyyy',autoClose:true,i18n:{cancel:'Cancelar',clear:'Limpar',done:'Ok',months:['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'],monthsShort:['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'],weekdays:['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'],weekdaysShort:['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'],weekdaysAbbrev:['D','S','T','Q','Q','S','S']}});jq('.timepicker').timepicker({twelveHour:false,autoClose:true,i18n:{cancel:'Cancelar',clear:'Limpar',done:'Ok'}});populate(Object.fromEntries(metadata.map(n=>[n,incoming.get(n)])),false);}
-    else{populate(boot,true);if(integrated){jq('.datepicker').datepicker({format:'dd/mm/yyyy',autoClose:true});jq('.timepicker').timepicker({twelveHour:false,autoClose:true});}primary.textContent=integrated?'Revisar as duas fichas':'Revisar PDF';form.querySelectorAll('button[onclick*="copyLink"]').forEach(el=>{el.hidden=true;el.style.display='none';});installReview();if(integrated)form.querySelectorAll('[data-generate]').forEach(el=>{el.hidden=true;el.style.display='none';});message(integrated?'Convite integrado · preencha as duas avaliações e revise os dois PDFs antes do envio.':'Convite individual · confira os dados e preencha a avaliação. O envio pode ser feito uma única vez.');}
+    else{populate(boot,true);if(integrated){if(boot.previaDate)$id('previaDate').value=boot.previaDate;if(boot.previaTime)$id('previaTime').value=boot.previaTime;}if(integrated){jq('.datepicker').datepicker({format:'dd/mm/yyyy',autoClose:true});jq('.timepicker').timepicker({twelveHour:false,autoClose:true});}primary.textContent=integrated?'Revisar as duas fichas':'Revisar PDF';form.querySelectorAll('button[onclick*="copyLink"]').forEach(el=>{el.hidden=true;el.style.display='none';});installReview();if(integrated)form.querySelectorAll('[data-generate]').forEach(el=>{el.hidden=true;el.style.display='none';});message(integrated?'Convite integrado · preencha as duas avaliações e revise os dois PDFs antes do envio.':'Convite individual · confira os dados e preencha a avaliação. O envio pode ser feito uma única vez.');}
     if(invitation)form.querySelectorAll('button[onclick*="copyLink"]').forEach(el=>el.style.display='none');
     installSignature();
     installRubrics();
