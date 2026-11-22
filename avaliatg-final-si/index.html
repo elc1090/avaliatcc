@@ -1,7 +1,8 @@
 <!doctype html>
-<html class="no-js" lang="">
+<html class="no-js" lang="pt-BR">
 
 <head>
+  <meta name="referrer" content="no-referrer">
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Avalia TCC</title>
@@ -9,9 +10,9 @@
   <meta name="description" content="">
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 
-  <link rel="icon" href="./assets/img/favicon.ico" sizes="any">
-  <link rel="icon" href="./assets/img/favicon.svg" type="image/svg+xml">
-  <link rel="apple-touch-icon" href="./assets/img/apple-touch-icon.png">
+  <link rel="icon" href="https://elc1090.github.io/project1-2024a-pizzutta-fork/avaliatg-final-si/assets/img/favicon.ico" sizes="any">
+  <link rel="icon" href="https://elc1090.github.io/project1-2024a-pizzutta-fork/avaliatg-final-si/assets/img/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="https://elc1090.github.io/project1-2024a-pizzutta-fork/avaliatg-final-si/assets/img/apple-touch-icon.png">
 
   <meta name="theme-color" content="#fafafa">
 
@@ -25,8 +26,9 @@
           integrity="sha512-rstIgDs0xPgmG6RX1Aba4KV5cWJbAMcvRCVmglpam9SoHZiUCyQVDdH2LPlxoHtrv17XWblE/V/PP+Tr04hbtA=="
           crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
-  <script src='js/pdfmake/pdfmake.min.js'></script>
-  <script src='js/pdfmake/vfs_fonts.js'></script>
+  <script src='https://elc1090.github.io/project1-2024a-pizzutta-fork/avaliatg-final-si/js/pdfmake/pdfmake.min.js?v=4b'></script>
+  <script src='https://elc1090.github.io/project1-2024a-pizzutta-fork/avaliatg-final-si/js/pdfmake/vfs_fonts.js?v=4b'></script>
+<link rel="stylesheet" href="../workflow/form.css?v=4b">
 </head>
 
 <body>
@@ -34,7 +36,7 @@
 <div class="container">
   <h3 class="bold">Avaliação de Defesa de Trabalho de Graduação</h3>
   <h4 class="bold">Sistemas de Informação / UFSM</h4>
-  <form id="evaluationForm" action="javascript:" onsubmit="generatePDF.open()" onreset="resetAllFields()">
+  <form id="evaluationForm" action="#" method="post">
 
     <section id="generalInformation" class="section card card-panel">
 
@@ -213,19 +215,20 @@
 
     <section id="signature" class="section card card-panel">
       <span class="card-title bold">Assinatura</span>
+      <p class="signature-importance"><strong>Importante:</strong> a assinatura é recomendada para a documentação oficial. Se você optar por continuar sem assinar, o sistema solicitará sua confirmação antes de gerar ou enviar o PDF.</p>
       <p>Você pode desenhar sua assinatura na tela ou selecionar um arquivo com imagem da assinatura. </p>
 
       <div class="row">
         <div class="col s12 m6 mt-2">
           <div class="col s6">
             <label class="black-text">
-              <input class="with-gap" name="signatureType" type="radio" value="DRAW" onclick="showCanvas()"/>
+              <input class="with-gap" name="signatureType" type="radio" value="DRAW"/>
               <span>Desenhar</span>
             </label>
           </div>
           <div class="col s6">
             <label class="black-text">
-              <input class="with-gap" name="signatureType" type="radio" value="SELECT" onclick="showSelect()"/>
+              <input class="with-gap" name="signatureType" type="radio" value="SELECT"/>
               <span>Selecionar</span>
             </label>
           </div>
@@ -346,7 +349,7 @@
           </button>        
       </div> -->      
       <div class="col s12 m3 l2 mb-1 right">
-        <button class="btn btn-block waves-effect waves-light indigo darken-4" type="submit">
+        <button class="btn btn-block waves-effect waves-light indigo darken-4" type="submit" disabled>
           Gerar PDF
         </button>
       </div>
@@ -367,12 +370,14 @@
 
 
 <script src="js/generatePDF.js"></script>
-<script src="js/validation.js"></script>
-<script src="js/signature.js"></script>
-<script src="js/initialize.js"></script>
+
+
+
 
 <!--  Materialize-->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+<script src="../workflow/config.js?v=4b"></script>
+<script src="../workflow/form.js?v=4b"></script>
 </body>
 
 </html>

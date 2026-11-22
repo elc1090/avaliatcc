@@ -1,0 +1,305 @@
+<!doctype html>
+<html class="no-js" lang="pt-BR">
+
+<head>
+  <meta name="referrer" content="no-referrer">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Avaliação integrada · CC</title>
+  <link rel="stylesheet" href="../avaliatg-final-cc/css/style.css?v=4b">
+  <meta name="description" content="">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+
+  <link rel="icon" href="https://elc1090.github.io/project1-2024a-pizzutta-fork/avaliatg-final-cc/assets/img/favicon.ico" sizes="any">
+  <link rel="icon" href="https://elc1090.github.io/project1-2024a-pizzutta-fork/avaliatg-final-cc/assets/img/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="https://elc1090.github.io/project1-2024a-pizzutta-fork/avaliatg-final-cc/assets/img/apple-touch-icon.png">
+
+  <meta name="theme-color" content="#fafafa">
+
+  
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"
+          integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.19.5/jquery.validate.min.js"
+          integrity="sha512-rstIgDs0xPgmG6RX1Aba4KV5cWJbAMcvRCVmglpam9SoHZiUCyQVDdH2LPlxoHtrv17XWblE/V/PP+Tr04hbtA=="
+          crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+  <script src='https://elc1090.github.io/project1-2024a-pizzutta-fork/avaliatg-final-cc/js/pdfmake/pdfmake.min.js?v=4b'></script>
+  <script src='https://elc1090.github.io/project1-2024a-pizzutta-fork/avaliatg-final-cc/js/pdfmake/vfs_fonts.js?v=4b'></script>
+<link rel="stylesheet" href="../workflow/form.css?v=4b">
+</head>
+
+<body>
+
+<div class="container">
+  <h3 class="bold">Avaliação Integrada de Trabalho de Graduação</h3>
+  <h4 class="bold">Ciência da Computação / UFSM</h4>
+  <form data-integrated="true" id="evaluationForm" action="#" method="post">
+
+    <section id="generalInformation" class="section card card-panel">
+
+      <span class="card-title bold">Informações gerais</span>
+    
+      <div class="row mb-0">
+        <div class="col s12 mt-2 mb-2">
+          <div class="col s6">
+            <label class="black-text">
+              <input class="with-gap" name="period" type="radio" value="1"/>
+              <span>1º Semestre</span>
+            </label>
+          </div>
+          <div class="col s6">
+            <label class="black-text">
+              <input class="with-gap" name="period" type="radio" value="2"/>
+              <span>2º Semestre</span>
+            </label>
+          </div>
+          <span id="periodError" class="red-text"></span>
+        </div>        
+        <div class="input-field col s12">
+          <input id="studentName" name="studentName" type="text"/>
+          <label for="studentName">Nome do(a) estudante</label>
+          <span id="studentNameError" class="red-text"></span>
+        </div>
+        <div class="input-field col s12">
+          <input id="date" name="date" type="text" class="datepicker"/>
+          <label for="date">Data da defesa</label>
+          <span id="dateError" class="red-text"></span>
+        </div>
+        <div class="input-field col s12">
+          <input id="time" name="time" type="text" class="timepicker"/>
+          <label for="time">Horário da defesa</label>
+          <span id="timeError" class="red-text"></span>
+        </div>        
+        <div class="input-field col s12">
+          <input id="professorName" name="professorName" type="text"/>
+          <label for="professorName">Nome do(a) avaliador(a)</label>
+          <span id="professorNameError" class="red-text"></span>
+        </div>
+      </div>
+    
+      <div class="row">
+
+    
+
+      </div>
+    
+    <div class="row"><div class="input-field col s12 m6"><input id="previaDate" name="previaDate" type="text" class="datepicker"><label for="previaDate">Data do andamento</label><span id="previaDateError" class="red-text"></span></div><div class="input-field col s12 m6"><input id="previaTime" name="previaTime" type="text" class="timepicker"><label for="previaTime">Horário do andamento</label><span id="previaTimeError" class="red-text"></span></div></div>
+</section>
+    
+    
+
+
+
+
+    <section id="evaluationPrevia" class="section card card-panel">
+
+      <span class="card-title bold">Avaliação de andamento (30%)</span>
+
+      <div class="row">
+
+
+        <div class="range-field col s12 mt-1 mb-1">
+          <label for="previaRubric1" class="black-text">Relevância e originalidade (máx 2,0): </label>
+          <span id="previaRubric1Value" class="black-text bold"></span>
+          <input class="mt-3" type="range" id="previaRubric1" name="previaRubric1" min="0" max="2"
+                 step="0.1"/>
+          <span id="previaRubric1Error" class="red-text"></span>
+        </div>
+
+        <div class="range-field col s12 mt-1 mb-1">
+          <label for="previaRubric2" class="black-text">Qualidade do conteúdo (máx 3,0): </label>
+          <span id="previaRubric2Value" class="black-text bold"></span>
+          <input class="mt-3" type="range" id="previaRubric2" name="previaRubric2" min="0" max="3"
+                 step="0.1"/>
+          <span id="previaRubric2Error" class="red-text"></span>
+        </div>
+
+        <div class="range-field col s12 mt-1 mb-1">
+          <label for="previaRubric3" class="black-text">Apresentação (máx 5,0): </label>
+          <span id="previaRubric3Value" class="black-text bold"></span>
+          <input class="mt-3" type="range" id="previaRubric3" name="previaRubric3" min="0" max="5"
+                 step="0.1"/>
+          <span id="previaRubric3Error" class="red-text"></span>
+        </div>
+
+      </div>
+      <div class="row">
+        <label for="previaValue" class="black-text">Nota de andamento (máx 10): </label>
+        <span id="previaValue" class="black-text bold"></span>
+        <p>Obs.: De acordo com as <a href="https://www.ufsm.br/app/uploads/sites/425/2025/04/Normas-Internas-TGs.pdf">normas</a>, a nota de andamento representa 30% da nota final. Os 70% restantes correspondem à nota da defesa, que acontecerá no final do semestre. </p>
+
+      </div>
+    </section>
+<section id="evaluation" class="section card card-panel">
+
+      <span class="card-title bold">Avaliação de defesa (70%)</span>
+
+      <div class="row">
+
+
+        <div class="range-field col s12 mt-1 mb-1">
+          <label for="presentationRubric1" class="black-text">Apresentação: conteúdo (máx 2,0): </label>
+          <span id="presentationRubric1Value" class="black-text bold"></span>
+          <input class="mt-3" type="range" id="presentationRubric1" name="presentationRubric1" min="0" max="2"
+                 step="0.1"/>
+          <span id="presentationRubric1Error" class="red-text"></span>
+        </div>
+
+        <div class="range-field col s12 mt-1 mb-1">
+          <label for="presentationRubric2" class="black-text">Apresentação: utilização do tempo e poder de síntese (máx 1,0): </label>
+          <span id="presentationRubric2Value" class="black-text bold"></span>
+          <input class="mt-3" type="range" id="presentationRubric2" name="presentationRubric2" min="0" max="1"
+                 step="0.1"/>
+          <span id="presentationRubric2Error" class="red-text"></span>
+        </div>
+
+        <div class="range-field col s12 mt-1 mb-1">
+          <label for="presentationRubric3" class="black-text">Relatório: estrutura do trabalho (máx 1,0): </label>
+          <span id="presentationRubric3Value" class="black-text bold"></span>
+          <input class="mt-3" type="range" id="presentationRubric3" name="presentationRubric3" min="0" max="1"
+                 step="0.1"/>
+          <span id="presentationRubric3Error" class="red-text"></span>
+        </div>
+
+        <div class="range-field col s12 mt-1 mb-1">
+          <label for="presentationRubric4" class="black-text">Relatório: relevância, originalidade e qualidade do conteúdo do texto (máx 3,0): </label>
+          <span id="presentationRubric4Value" class="black-text bold"></span>
+          <input class="mt-3" type="range" id="presentationRubric4" name="presentationRubric4" min="0" max="3"
+                 step="0.1"/>
+          <span id="presentationRubric4Error" class="red-text"></span>
+        </div>
+
+        <div class="range-field col s12 mt-1 mb-1">
+          <label for="presentationRubric5" class="black-text">Relatório: grau de conhecimento demonstrado no trabalho escrito (máx 2,0): </label>
+          <span id="presentationRubric5Value" class="black-text bold"></span>
+          <input class="mt-3" type="range" id="presentationRubric5" name="presentationRubric5" min="0" max="2"
+                 step="0.1"/>
+          <span id="presentationRubric5Error" class="red-text"></span>
+        </div>
+
+        <div class="range-field col s12 mt-1 mb-1">
+          <label for="presentationRubric6" class="black-text">Relatório: adequação da bibliografia apresentada (máx 1,0): </label>
+          <span id="presentationRubric6Value" class="black-text bold"></span>
+          <input class="mt-3" type="range" id="presentationRubric6" name="presentationRubric6" min="0" max="1"
+                 step="0.1"/>
+          <span id="presentationRubric6Error" class="red-text"></span>
+        </div>
+
+
+      </div>
+      <div class="row">
+        <label for="finalValue" class="black-text">Nota total da sessão de defesa: </label>
+        <span id="finalValue" class="black-text bold"></span>
+        <p>Obs.: De acordo com as <a href="https://www.ufsm.br/app/uploads/sites/425/2025/04/Normas-Internas-TGs.pdf">normas</a>, a nota da sessão de defesa representa 70% da nota final. Os 30% restantes correspondem à nota do andamento, que aconteceu anteriormente. </p>
+
+      </div>
+    </section>
+
+
+    <section class="section card card-panel"><h5 class="bold">Resultado</h5><div class="integrated-summary"><div>Andamento · 30% <strong id="summaryPrevia">—</strong></div><div>Defesa · 70% <strong id="summaryFinal">—</strong></div><div>Nota final <strong id="weightedValue">—</strong></div></div><p id="weightedProgress">A nota final será exibida quando todos os critérios das duas avaliações estiverem preenchidos.</p><p>Durante o preenchimento, mostramos os pontos atribuídos em cada avaliação. Os dois PDFs continuam independentes e preservam seus modelos originais.</p><div id="integratedDownloads" hidden></div></section>
+<section id="signature" class="section card card-panel">
+      <span class="card-title bold">Assinatura</span>
+      <p class="signature-importance"><strong>Importante:</strong> a assinatura é recomendada para a documentação oficial. Se você optar por continuar sem assinar, o sistema solicitará sua confirmação antes de gerar ou enviar o PDF.</p>
+      <p>Você pode desenhar sua assinatura na tela ou selecionar um arquivo com imagem da assinatura. </p>
+
+      <div class="row">
+        <div class="col s12 m6 mt-2">
+          <div class="col s6">
+            <label class="black-text">
+              <input class="with-gap" name="signatureType" type="radio" value="DRAW"/>
+              <span>Desenhar</span>
+            </label>
+          </div>
+          <div class="col s6">
+            <label class="black-text">
+              <input class="with-gap" name="signatureType" type="radio" value="SELECT"/>
+              <span>Selecionar</span>
+            </label>
+          </div>
+          <span id="signatureTypeError" class="red-text"></span>
+        </div>
+      </div>
+      <div id="signatureWrapper" class="row">
+        <div class="col s12 center">
+          <div id="signatureCanvasWrapper" style="display:none; width: 100%; text-align: center;">
+            <div class="row">
+              <div class="col s12">
+                <div class="canvas-container">
+                  <canvas id="signatureCanvas"></canvas>
+                </div>
+                <input name="signatureCanvas" type="hidden">
+              </div>
+            </div>
+            <div class="row">
+              <div class="col s12">
+                <button class="btn btn-small waves-effect waves-light indigo lighten-1" type="button" onclick="clearCanvas()">Limpar assinatura</button>
+              </div>
+              <div class="col s12">
+                <span id="signatureCanvasError" class="red-text"></span>
+              </div>
+            </div>
+          </div>
+
+          <div id="signatureSelect" class="file-field input-field" style="display:none; width: 100%; text-align: center;">
+            <div class="row">
+              <div class="col s12" >
+                <img id="signaturePreview" src="#">
+              </div>
+            </div>
+            <div class="row">
+              <div class="col s12">
+                <div class="btn indigo darken-4">
+                  <span>Selecione o arquivo</span>
+                  <input id="signatureField" name="signatureField" type="file" accept="image/*">
+                </div>
+              </div>
+              <div class="col s12">
+                <span id="signatureFieldError" class="red-text"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+    
+
+    
+
+    <footer id="footer" class="row"><div class="col s12 mb-1 workflow-actions"><button type="button" class="btn-flat indigo-text" data-generate="previa">Gerar ficha de andamento</button><button type="button" class="btn-flat indigo-text" data-generate="final">Gerar ficha de defesa</button></div>
+    
+            
+      <div class="col s12 m3 l2 mb-1 right">
+        <button class="btn btn-block waves-effect waves-light indigo darken-4" type="submit" disabled>
+          Gerar ambas as fichas
+        </button>
+      </div>
+      <div class="col s12 m3 l2 mb-1 right">
+        <button class="btn btn-block waves-effect waves-light btn-flat indigo-text text-darken-4" type="reset">
+          Limpar campos
+        </button>
+      </div>
+      <div class="col s12 m3 l3 mb-1">
+        
+      </div>        
+      
+    </footer>
+  </form>
+</div>
+
+
+<script src="../avaliatg-final-cc/js/generatePDF.js?v=4b"></script>
+<script src="js/previa-template.js"></script>
+
+
+
+
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+<script src="../workflow/config.js?v=4b"></script>
+<script src="../workflow/form.js?v=4b"></script>
+</body>
+
+</html>
