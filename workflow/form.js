@@ -7,14 +7,14 @@
   let managed = false;
   let invitation = false, integrated = false;
   const isPrevia = el => el.id.startsWith('previaRubric');
-  const formCode = {'avaliatg-previa-cc':'CC-PREVIA','avaliatg-final-cc':'CC-FINAL','avaliatg-final-si':'SI-FINAL'}[location.pathname.split('/').filter(Boolean).find(p=>p.startsWith('avaliatg-') && ['avaliatg-previa-cc','avaliatg-final-cc','avaliatg-final-si'].includes(p))];
+  const formCode = {'avaliatg-previa-cc':'CC-PREVIA','avaliatg-final-cc':'CC-FINAL','avaliatg-final-si':'SI-FINAL','avaliatg-integrada-cc':'CC-INTEGRADA'}[location.pathname.split('/').filter(Boolean).find(p=>p.startsWith('avaliatg-') && ['avaliatg-previa-cc','avaliatg-final-cc','avaliatg-final-si','avaliatg-integrada-cc'].includes(p))];
   const config = window.AVALIA_CONFIG || {};
   const metadata = ['studentName','professorName','period','date','time'];
   const maxPdf = 5 * 1024 * 1024;
   let form, sliders, status, review, frame, reviewDownload, sendBtn, primary, canvas, ctx, preview, signatureFile;
   let signatureType = '', signatureReady = false, signatureRead = 0, drawing = false, busy = false, consumed = false;
   let previousDisabled = new Map();
-  let revision = 0, pdfBlob = null, pdfUrl = '', pdfName = '';
+  let revision = 0, pdfBlob = null, pdfUrl = '', pdfName = '', integratedDocs = []; 
   const selected = new Set();
 
   // The original GeneratePDF.getData() uses a global signature object.
@@ -34,12 +34,12 @@
     if(pdfUrl)URL.revokeObjectURL(pdfUrl);pdfUrl='';pdfBlob=null;
     if(frame)frame.removeAttribute('src'); if(review)review.hidden=true; if(sendBtn)sendBtn.disabled=true;
   }
-  function invalidate() { revision++; if(integrated){const panel=$id('integratedDownloads');if(panel){panel.hidden=true;panel.replaceChildren();}} if(!consumed&&pdfBlob){releasePdf();message('O formulário foi alterado. Gere um novo PDF para enviar.');} }
+  function invalidate() { revision++; if(integrated){for(const doc of integratedDocs)if(doc.previewUrl)URL.revokeObjectURL(doc.previewUrl);integratedDocs=[];const panel=$id('integratedDownloads');if(panel){panel.hidden=true;panel.replaceChildren();}if(review)review.hidden=true;} if(!consumed&&pdfBlob){releasePdf();message('O formulário foi alterado. Gere um novo PDF para enviar.');} }
   function setBusy(value) {
     if(value && !busy){previousDisabled=new Map();form.querySelectorAll('input,button,textarea,select').forEach(el=>{previousDisabled.set(el,el.disabled);el.disabled=true;});}
     if(!value && busy){previousDisabled.forEach((was,el)=>{el.disabled=consumed&&el!==reviewDownload?true:was;});previousDisabled.clear();}
     busy=value; if(primary)primary.disabled=value||consumed;
-    if(sendBtn)sendBtn.disabled=value||consumed||!pdfBlob;
+    if(sendBtn)sendBtn.disabled=value||consumed||!(integrated?integratedDocs.length===2:pdfBlob);
     if(reviewDownload)reviewDownload.disabled=value;
     if(form)form.setAttribute('aria-busy',String(value));
   }
@@ -176,7 +176,8 @@
   function makeBlob(definition){return new Promise((resolve,reject)=>{const timer=setTimeout(()=>reject(new Error('Tempo limite ao gerar PDF.')),30000);const done=b=>{clearTimeout(timer);resolve(b);};const fail=e=>{clearTimeout(timer);reject(e);};try{const result=pdfMake.createPdf(definition).getBlob(done);if(result&&typeof result.catch==='function')result.catch(fail);}catch(e){fail(e);}});}
   async function generate(e,target='both') {
     e.preventDefault();if(busy||consumed||!validate(target)||!confirmUnsigned())return;
-    releasePdf();setBusy(true);message('Gerando PDF…');const snapshot=revision;
+    if(managed&&integrated&&target!=='both'){message('Este convite exige as duas fichas. Use “Revisar as duas fichas”.','error');return;}
+    releasePdf();for(const doc of integratedDocs)if(doc.previewUrl)URL.revokeObjectURL(doc.previewUrl);integratedDocs=[];setBusy(true);message('Gerando PDF…');const snapshot=revision;
     try {
       if(integrated){
         const types=target==='both'?['previa','final']:[target], docs=[];
@@ -188,6 +189,15 @@
         if(snapshot!==revision)return;
         const panel=$id('integratedDownloads');panel.replaceChildren();panel.hidden=false;
         for(const doc of docs){const link=document.createElement('button');link.type='button';link.className='btn-flat indigo-text';link.textContent='Baixar '+doc.name;link.addEventListener('click',()=>download(doc.blob,doc.name));panel.append(link);}
+        if(managed){
+          if(docs.some(doc=>doc.blob.size>maxPdf)){message('Uma das fichas excede 5 MB. Reduza a imagem da assinatura antes de enviar.','error');return;}
+          integratedDocs=docs.map((doc,i)=>({...doc,part:['previa','final'][i]}));
+          review.hidden=false;
+          const previews=review.querySelector('[data-integrated-preview]');previews.replaceChildren();
+          for(const doc of integratedDocs){const heading=document.createElement('h6');heading.textContent=doc.part==='previa'?'Ficha de andamento':'Ficha de defesa';
+            const iframe=document.createElement('iframe');iframe.className='workflow-pdf';iframe.title='Prévia da '+heading.textContent;iframe.src=URL.createObjectURL(doc.blob);doc.previewUrl=iframe.src;previews.append(heading,iframe);}
+          message('Duas fichas prontas. Confira os documentos e envie ambas.');review.scrollIntoView({block:'start',behavior:'smooth'});return;
+        }
         if(docs.length===1)download(docs[0].blob,docs[0].name);
         else {for(const doc of docs)download(doc.blob,doc.name);}
         message(docs.length===2?'Duas fichas geradas. Se o navegador bloquear um download, use os botões em Resultado.':'Ficha gerada.');return;
@@ -212,8 +222,23 @@
   }
   function submitRemote(payload){return api({...payload,action:'submit',form:formCode});}
   async function send() {
-    if(busy||consumed||!pdfBlob||!confirmUnsigned())return;
-    setBusy(true);message('Enviando PDF. Mantenha esta página aberta…');const blob=pdfBlob;
+    if(busy||consumed||!(integrated?integratedDocs.length===2:pdfBlob)||!confirmUnsigned())return;
+    setBusy(true);message(integrated?'Enviando as duas fichas. Mantenha esta página aberta…':'Enviando PDF. Mantenha esta página aberta…');const blob=pdfBlob;
+    if(integrated){
+      try{
+        let finalReceipt='';
+        for(const doc of integratedDocs){
+          message('Enviando ficha de '+(doc.part==='previa'?'andamento':'defesa')+'…');
+          const response=await submitRemote({token:boot.token,part:doc.part,pdf:await toBase64(doc.blob)});
+          if(!['part_received','received','already_received'].includes(response?.status))throw new Error(response?.message||'Resposta não confirmada.');
+          finalReceipt=response.receipt;
+          if(response.status==='already_received'){consumed=true;message('Convite já utilizado. Os arquivos anteriormente recebidos foram preservados. Recibo: '+response.receipt,'success');return;}
+          if(doc.part==='final'&&response.status!=='received')throw new Error('A conclusão dos dois arquivos não foi confirmada.');
+        }
+        consumed=true;sendBtn.textContent='Duas fichas recebidas';message('As duas avaliações foram recebidas. Recibo: '+finalReceipt,'success');
+      }catch(e){message('Envio não confirmado: '+(e?.message||'')+' Clique em “Enviar as duas fichas” novamente para retomar; arquivos já recebidos não serão duplicados.','error');}
+      finally{setBusy(false);}return;
+    }
     try{const result=await submitRemote({token:boot.token,pdf:await toBase64(blob)});if(!['received','already_received'].includes(result?.status))throw new Error('Resposta não confirmada.');
       consumed=true;form.querySelectorAll('input,button,textarea').forEach(el=>{if(el!==reviewDownload)el.disabled=true;});
       if(sendBtn)sendBtn.textContent='Avaliação recebida';if(result.status==='already_received'&&reviewDownload)reviewDownload.textContent='Baixar PDF local (não enviado)';message((result.status==='received'?'Avaliação recebida com sucesso.':'Este convite já foi utilizado. A avaliação anteriormente recebida foi preservada.')+' Recibo: '+result.receipt,'success');
@@ -229,15 +254,18 @@
   function installReview(){
     review=document.createElement('section');review.className='card card-panel workflow-review';review.hidden=true;
     review.innerHTML='<h5 class="bold">Conferir ficha de avaliação</h5><p>O PDF abaixo é o documento que será enviado. Se a prévia não aparecer no seu navegador, baixe uma cópia para conferir. O convite só permite um envio bem-sucedido.</p><div class="workflow-status" data-status role="status" aria-live="polite"></div><iframe title="Prévia do PDF" class="workflow-pdf"></iframe><div class="workflow-actions"><button type="button" class="btn-flat indigo-text" data-download>Baixar PDF</button><button type="button" class="btn indigo darken-4" data-send>Enviar avaliação</button></div>';
-    const footer=$id('footer');if(footer)footer.after(review);else form.append(review);frame=review.querySelector('iframe');sendBtn=review.querySelector('[data-send]');reviewDownload=review.querySelector('[data-download]');sendBtn.addEventListener('click',send);reviewDownload.addEventListener('click',()=>{if(pdfBlob)download(pdfBlob,pdfName);});
+    if(integrated){review.querySelector('h5').textContent='Conferir as duas fichas';review.querySelector('p').textContent='Confira as fichas de andamento e defesa antes do envio. O convite será concluído somente após os dois PDFs serem recebidos.';
+      review.querySelector('iframe').remove();const container=document.createElement('div');container.dataset.integratedPreview='';review.querySelector('.workflow-status').after(container);
+      review.querySelector('[data-download]').remove();review.querySelector('[data-send]').textContent='Enviar as duas fichas';}
+    const footer=$id('footer');if(footer)footer.after(review);else form.append(review);frame=review.querySelector('iframe');sendBtn=review.querySelector('[data-send]');reviewDownload=review.querySelector('[data-download]');sendBtn.addEventListener('click',send);if(reviewDownload)reviewDownload.addEventListener('click',()=>{if(pdfBlob)download(pdfBlob,pdfName);});
   }
   async function init(){
     form=$id('evaluationForm');if(!form)return;integrated=form.dataset.integrated==='true';
     const incoming=new URLSearchParams(location.search);const token=new URLSearchParams(location.hash.slice(1)).get('t')||incoming.get('t')||incoming.get('token');
-    invitation=Boolean(token)&&!integrated;
+    invitation=Boolean(token);
     sliders=Array.from(form.querySelectorAll('input[type=range]'));primary=form.querySelector('button[type=submit]');
     status=document.createElement('div');status.className='workflow-status';status.setAttribute('role','status');status.setAttribute('aria-live','polite');form.prepend(status);
-    if(!window.M||!window.jQuery||!window.pdfMake||typeof GeneratePDF==='undefined'){message('Não foi possível carregar as bibliotecas necessárias. Recarregue a página.','error');primary.disabled=true;return;}
+    if(!window.M||!window.jQuery||!window.pdfMake||typeof GeneratePDF==='undefined'||(integrated&&typeof GeneratePreviaPDF==='undefined')){message('Não foi possível carregar as bibliotecas necessárias. Recarregue a página.','error');primary.disabled=true;return;}
     const jq=window.jQuery;
     if(invitation){
       message('Verificando convite…');primary.disabled=true;
@@ -250,7 +278,7 @@
       }catch(e){message('Não foi possível verificar o convite. Você pode preencher e baixar o PDF normalmente e encaminhá-lo à orientação. Para tentar o envio direto, recarregue a página.','error');}
     }
     if(!managed){jq('.datepicker').datepicker({format:'dd/mm/yyyy',autoClose:true,i18n:{cancel:'Cancelar',clear:'Limpar',done:'Ok',months:['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'],monthsShort:['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'],weekdays:['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'],weekdaysShort:['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'],weekdaysAbbrev:['D','S','T','Q','Q','S','S']}});jq('.timepicker').timepicker({twelveHour:false,autoClose:true,i18n:{cancel:'Cancelar',clear:'Limpar',done:'Ok'}});populate(Object.fromEntries(metadata.map(n=>[n,incoming.get(n)])),false);}
-    else{populate(boot,true);primary.textContent='Revisar PDF';form.querySelectorAll('button[onclick*="copyLink"]').forEach(el=>{el.hidden=true;el.style.display='none';});installReview();message('Convite individual · confira os dados e preencha a avaliação. O envio pode ser feito uma única vez.');}
+    else{populate(boot,true);if(integrated){jq('.datepicker').datepicker({format:'dd/mm/yyyy',autoClose:true});jq('.timepicker').timepicker({twelveHour:false,autoClose:true});}primary.textContent=integrated?'Revisar as duas fichas':'Revisar PDF';form.querySelectorAll('button[onclick*="copyLink"]').forEach(el=>{el.hidden=true;el.style.display='none';});installReview();if(integrated)form.querySelectorAll('[data-generate]').forEach(el=>{el.hidden=true;el.style.display='none';});message(integrated?'Convite integrado · preencha as duas avaliações e revise os dois PDFs antes do envio.':'Convite individual · confira os dados e preencha a avaliação. O envio pode ser feito uma única vez.');}
     if(invitation)form.querySelectorAll('button[onclick*="copyLink"]').forEach(el=>el.style.display='none');
     installSignature();
     installRubrics();

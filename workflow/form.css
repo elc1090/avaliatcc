@@ -31,3 +31,7 @@ input[aria-readonly=true] {color:#343b64!important; background:#f6f7fb!important
 
 /* v4b: signatures remain recommended, not mandatory after explicit confirmation. */
 #signature .signature-importance {padding:10px 14px;background:#fff8e1;border-left:3px solid #efb449;border-radius:4px;}
+
+/* v4c: two independent PDF previews in one invitation. */
+[data-integrated-preview] h6 {margin:24px 0 10px;font-size:1.05rem;font-weight:600;color:#1a237e;}
+[data-integrated-preview] iframe+ h6 {margin-top:28px;}
