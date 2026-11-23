@@ -20,19 +20,18 @@ const PROPS = PropertiesService.getScriptProperties();
 const STATUS = {PENDING:'PENDENTE', RECEIVED:'RECEBIDO', REVOKED:'REVOGADO'};
 
 function onOpen() {
-  const menu=SpreadsheetApp.getUi().createMenu('Avalia TG')
-    .addItem('1. Configurar planilha e pasta', 'configureWorkflow')
-    .addItem('RECRIAR Bancas e Convites (APAGA TESTES)', 'resetWorkflowV5')
-    .addItem('Atualizar resumo das notas', 'refreshGrades')
-    .addItem('2. Gerar convites das bancas selecionadas', 'issueFromSessions')
-    .addItem('Gerar somente andamento (CC separadas)', 'issueProgressOnly')
-    .addItem('Gerar somente defesa (CC separadas)', 'issueDefenseOnly')
-    .addItem('Gerar convites nas linhas selecionadas (manual)', 'issueSelected')
+  const ui = SpreadsheetApp.getUi();
+  const maintenance = ui.createMenu('Manutenção')
     .addItem('Revogar convites selecionados', 'revokeSelected')
-    .addItem('Migrar links pendentes para GitHub Pages', 'migrateInvitationLinks')
-    .addItem('Reconciliar recebimentos', 'reconcileSubmissions');
-  if(typeof draftForSecretary==='function')menu.addSeparator().addItem('Criar rascunho para secretaria (TCC e formulário)', 'draftForSecretary');
-  menu.addToUi();
+    .addItem('Reconciliar recebimentos', 'reconcileSubmissions')
+    .addItem('Repetir compartilhamentos pendentes', 'retryEvaluationSharing')
+    .addItem('Atualizar resumo das notas', 'refreshGrades')
+    .addItem('Configurar planilha e pasta', 'configureWorkflow');
+  ui.createMenu('Avalia TG')
+    .addItem('Gerenciar convites…', 'openInvitationManager')
+    .addItem('Preparar e-mail para a secretaria…', 'prepareSecretaryEmail')
+    .addSubMenu(maintenance)
+    .addToUi();
 }
 
 // All menu actions verify the owner explicitly. Public web app executes as owner,
@@ -237,7 +236,7 @@ function sessionData_(raw,display){
 function issueProgressOnly(){issueFromSessions_('CC-PREVIA');}
 function issueDefenseOnly(){issueFromSessions_('CC-FINAL');}
 function issueFromSessions(){issueFromSessions_('ALL');}
-function issueFromSessions_(selectionType){
+function issueFromSessions_(selectionType, fromDialog = false){
   const ss=admin_(),src=ss.getActiveSheet();if(src.getName()!==SESSION_SHEET)throw Error('Selecione linhas na aba Bancas.');
   const sel=src.getActiveRange();if(!sel||sel.getLastRow()<2)throw Error('Selecione bancas.');
   const sh=sheet_(),base=deploymentUrl_(),notes=[];
@@ -275,7 +274,9 @@ function issueFromSessions_(selectionType){
         src.getRange(n,SESSION_COL.length).setValue(lines.length+' convite(s) gerado(s)');
       }catch(e){notes.push('Banca '+n+': '+e.message);src.getRange(n,SESSION_COL.length).setValue('Erro: '+e.message);}
     }
-  });ss.setActiveSheet(sh);SpreadsheetApp.getUi().alert(notes.join('\n')||'Nenhum convite novo.');
+  });
+  if(fromDialog)return notes.join('\n')||'Nenhum convite novo.';
+  ss.setActiveSheet(sh);SpreadsheetApp.getUi().alert(notes.join('\n')||'Nenhum convite novo.');
 }
 function lookup_(sh,t) {
   if(!validToken_(t)) return null; const h=hash_(t), rows=rows_(sh);
@@ -297,7 +298,8 @@ function markReceived_(sh,n,row,file) {
     if(row[C['Formulário']]==='CC-PREVIA')row[C['Nota andamento']]=Number(g);
     else if(row[C['Formulário']]==='CC-FINAL'||row[C['Formulário']]==='SI-FINAL')row[C['Nota defesa']]=Number(g);
     if(row[C['Formulário']]==='SI-FINAL')row[C['Nota avaliador']]=Number(g);
-  }put_(sh,n,row);try{refreshGrades_();}catch(e){console.warn("Resumo de notas não atualizado: "+e.message);}
+  }put_(sh,n,row);shareReceivedEvaluation_(row, [file]);
+  try{refreshGrades_();}catch(e){console.warn("Resumo de notas não atualizado: "+e.message);}
 }
 function json_(value){return ContentService.createTextOutput(JSON.stringify(value)).setMimeType(ContentService.MimeType.JSON);}
 function doGet(){return json_({status:'ok',service:'Avalia TG',version:'5'});}
@@ -381,7 +383,8 @@ function markIntegratedReceived_(sh,n,row,files) {
   row[C['SHA256 PDF']]=JSON.stringify({previa:files.previa.appProperties.sha256,final:files.final.appProperties.sha256});
   row[C['Nota andamento']]=Number(files.previa.appProperties.grade);row[C['Nota defesa']]=Number(files.final.appProperties.grade);
   row[C['Nota avaliador']]=Math.round((.3*Number(row[C['Nota andamento']])+.7*Number(row[C['Nota defesa']]))*100)/100;
-  put_(sh,n,row);try{refreshGrades_();}catch(e){console.warn("Resumo de notas não atualizado: "+e.message);}return true;
+  put_(sh,n,row);shareReceivedEvaluation_(row, [files.previa, files.final]);
+  try{refreshGrades_();}catch(e){console.warn("Resumo de notas não atualizado: "+e.message);}return true;
 }
 function submitIntegrated(payload) {
   if(!payload||!validToken_(payload.token)||!['previa','final'].includes(payload.part)||typeof payload.pdf!=='string')throw new Error('Solicitação inválida.');

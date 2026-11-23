@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <base target="_blank">
+  <meta charset="utf-8">
+  <style>
+    body { font: 14px system-ui, sans-serif; margin: 16px; color: #202124; }
+    button, select { font: inherit; padding: 6px 9px; }
+    .actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
+    article { border-top: 1px solid #dadce0; padding: 12px 0; }
+    pre { white-space: pre-wrap; overflow-wrap: anywhere; font: inherit; margin: 8px 0; }
+    #status { white-space: pre-wrap; max-height: 9em; overflow: auto; }
+  </style>
+</head>
+<body>
+  <label for="stage">Etapa</label>
+  <select id="stage">
+    <option value="ALL">Todas as etapas da modalidade</option>
+    <option value="CC-PREVIA">Andamento (CC separadas)</option>
+    <option value="CC-FINAL">Defesa (CC separadas)</option>
+  </select>
+  <div class="actions">
+    <button id="generate" type="button">Gerar links faltantes</button>
+    <button id="preview" type="button">Atualizar prévia</button>
+    <button id="test" type="button">Enviar teste para mim</button>
+    <button id="send" type="button">Enviar convites</button>
+  </div>
+  <p id="status" role="status"></p>
+  <section id="messages" aria-label="Prévia dos convites"></section>
+  <script>
+    const stage = document.getElementById('stage');
+    const generate = document.getElementById('generate');
+    const preview = document.getElementById('preview');
+    const test = document.getElementById('test');
+    const send = document.getElementById('send');
+    const statusMessage = document.getElementById('status');
+    const messages = document.getElementById('messages');
+    let current;
+    let busy = false;
+
+    function pendingCount() {
+      return current?.messages.filter(message => message.state === 'PENDENTE').length || 0;
+    }
+
+    function updateControls() {
+      stage.disabled = generate.disabled = preview.disabled = busy;
+      test.disabled = busy || !current?.messages.length;
+      send.disabled = busy || !pendingCount();
+    }
+
+    function run(action, args, onSuccess, label) {
+      busy = true;
+      updateControls();
+      statusMessage.textContent = label;
+      google.script.run.withFailureHandler(error => {
+        busy = false;
+        current = null;
+        updateControls();
+        statusMessage.textContent = error.message;
+      }).withSuccessHandler(result => {
+        busy = false;
+        onSuccess(result);
+        updateControls();
+      })[action](...args);
+    }
+
+    function showText(parent, tag, value) {
+      const element = document.createElement(tag);
+      element.textContent = value;
+      parent.append(element);
+    }
+
+    function refresh(previousStatus) {
+      current = null;
+      messages.replaceChildren();
+      run('previewInvitationEmails', [stage.value], result => {
+        current = result;
+        statusMessage.textContent = previousStatus || result.messages.length + ' convite(s) na prévia.';
+        for (const message of result.messages) {
+          const card = document.createElement('article');
+          showText(card, 'strong', message.recipient + ' · ' + message.state);
+          showText(card, 'p', message.subject);
+          showText(card, 'pre', message.body);
+          messages.append(card);
+        }
+        if (result.minutes.length) {
+          showText(messages, 'h3', 'Links da ata para a presidência da banca');
+          showText(messages, 'pre', result.minutes.join('\n'));
+        }
+      }, 'Carregando prévia…');
+    }
+
+    function sendBatch(isTest) {
+      if (!isTest && !window.confirm('Enviar ' + pendingCount() + ' convite(s) aos destinatários da prévia?')) return;
+      run('sendInvitationEmails', [stage.value, current.revision, isTest], refresh, 'Enviando e-mails…');
+    }
+
+    stage.addEventListener('change', () => refresh());
+    preview.addEventListener('click', () => refresh());
+    generate.addEventListener('click', () => run('generateInvitationLinks', [stage.value], refresh, 'Gerando links…'));
+    test.addEventListener('click', () => sendBatch(true));
+    send.addEventListener('click', () => sendBatch(false));
+    refresh();
+  </script>
+</body>
+</html>
