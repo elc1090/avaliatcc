@@ -122,6 +122,31 @@ function hash_(data) { return Utilities.computeDigest(Utilities.DigestAlgorithm.
 function token_() { return (Utilities.getUuid()+Utilities.getUuid()).replace(/-/g,'').toLowerCase(); }
 function validToken_(t) { return typeof t==='string' && /^[a-f0-9]{64}$/.test(t); }
 function safeName_(s) { return String(s).normalize('NFC').replace(/[\\/:*?"<>|\x00-\x1f]/g,'_').replace(/\s+/g,' ').trim().slice(0,100) || 'sem-nome'; }
+// Keep the filename convention in sync with workflow/pdf-filename.js.
+function pdfFilename({term, date, period, form, studentName, professorName}, part) {
+  const clean = value => String(value || '').normalize('NFD').replace(/\p{M}/gu, '')
+    .replace(/[^\p{L}\p{N}]+/gu, '-').replace(/^-|-$/g, '');
+  const termMatch = /^(\d{4})-([12])$/.exec(term);
+  const isoDate = /^(\d{4})-(\d{2})-\d{2}$/.exec(date);
+  const brDate = /^\d{2}\/(\d{2})\/(\d{4})$/.exec(date);
+  const year = termMatch?.[1] || isoDate?.[1] || brDate?.[2];
+  const month = isoDate?.[2] || brDate?.[1];
+  const semester = termMatch?.[2] || period || (month && (Number(month) <= 6 ? '1' : '2'));
+  const academicTerm = year && /^[12]$/.test(semester)
+    ? year + (String(semester) === '1' ? 'a' : 'b')
+    : 'Periodo-Indefinido';
+  const [course, kind] = form.split('-');
+  const ata = kind === 'ATA';
+  const label = ata ? 'AtaDefesa' : (kind === 'PREVIA' || part === 'previa' ? 'FichaAndamento' : 'FichaDefesa');
+  const filename = [academicTerm, course, clean(studentName) || 'Estudante', label];
+  if (!ata) {
+    const firstName = clean(String(professorName || '').trim()
+      .replace(/^(?:(?:prof(?:a|essor(?:a)?)?|dr(?:a)?)[.ªº]?[\s-]+)+/i, '')
+      .split(/\s+/)[0]);
+    filename.push('Prof', firstName || 'Avaliador');
+  }
+  return filename.join('-') + '.pdf';
+}
 function text_(v) { return String(v==null?'':v).trim(); }
 function metadata_(row,display) {
   const m={tccId:text_(row[C.TCC_ID]),term:text_(row[C['Período']]),form:text_(row[C['Formulário']]),studentName:text_(row[C.Estudante]),professorName:text_(row[C.Avaliador]),email:text_(row[C['E-mail']]),period:text_(row[C.Semestre]),date:text_(display[C.Data]),time:text_(display[C['Horário']])};
@@ -285,7 +310,7 @@ function validateInvitation_(t,form){
   const m=JSON.parse(r[C['Dados fixos']]);
   if(form!==m.form)return {status:'wrong_form',message:'Este convite pertence a outro formulário.'};
   const summary=['CC-ATA','SI-ATA'].includes(m.form)?gradeSummary_(m.tccId,m.term):null;
-  return {status:'valid',form:m.form,studentName:m.studentName,professorName:m.professorName,period:m.period,date:m.date,time:m.time,previaDate:m.previaDate||'',previaTime:m.previaTime||'',title:m.title||'',course:m.course||'',defenseMode:m.defenseMode||'',location:m.location||'',deadline:m.deadline||'',examiners:m.examiners||[],grade:summary?.complete?summary.grade:null,gradeComplete:!!summary?.complete};
+  return {status:'valid',form:m.form,term:m.term,studentName:m.studentName,professorName:m.professorName,period:m.period,date:m.date,time:m.time,previaDate:m.previaDate||'',previaTime:m.previaTime||'',title:m.title||'',course:m.course||'',defenseMode:m.defenseMode||'',location:m.location||'',deadline:m.deadline||'',examiners:m.examiners||[],grade:summary?.complete?summary.grade:null,gradeComplete:!!summary?.complete};
 }
 function doPost(e){
   try{
@@ -318,7 +343,7 @@ function submitEvaluation(payload) {
     if(expired_(row)) throw new Error('Convite expirado. Solicite novo link.');
     const m=JSON.parse(row[C['Dados fixos']]);
     const submittedGrade=EVALUATION_FORMS.includes(m.form)?parseGrade_(payload.grade):null;
-    const name=safeName_(m.form)+' - '+safeName_(m.professorName)+' - '+row[C['ID convite']].slice(0,8)+'.pdf';
+    const name=pdfFilename(m);
     const blob=Utilities.newBlob(bytes,'application/pdf',name);
     try {
       file=Drive.Files.create({id:row[C['ID arquivo']],name,mimeType:'application/pdf',parents:[row[C['ID pasta']]],appProperties:{invitation:row[C['ID convite']],sha256:digest,...(submittedGrade===null?{}:{grade:String(submittedGrade)})}},blob,{fields:'id,name,trashed,parents,appProperties,webViewLink',supportsAllDrives:true});
@@ -376,7 +401,7 @@ function submitIntegrated(payload) {
     if(expired_(row))throw new Error('Convite expirado. Solicite novo link.');
     const ids=integratedIds_(row), part=payload.part;
     parseGrade_(payload.grade);
-    const name='CC-'+(part==='previa'?'ANDAMENTO':'DEFESA')+' - '+safeName_(m.professorName)+' - '+row[C['ID convite']].slice(0,8)+'.pdf';
+    const name=pdfFilename(m,part);
     const blob=Utilities.newBlob(bytes,'application/pdf',name);
     let file;
     try{file=Drive.Files.create({id:ids[part],name,mimeType:'application/pdf',parents:[row[C['ID pasta']]],appProperties:{invitation:row[C['ID convite']],part,sha256:digest,grade:String(parseGrade_(payload.grade))}},blob,{fields:'id,name,trashed,parents,appProperties,webViewLink',supportsAllDrives:true});}

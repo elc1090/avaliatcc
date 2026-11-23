@@ -168,7 +168,9 @@
     error('signatureType');error('signatureCanvas');error('signatureField');
     if(first){message('Confira os campos indicados antes de gerar o PDF.','error');first.scrollIntoView({block:'center',behavior:'smooth'});first.focus?.({preventScroll:true});return false;}return true;
   }
-  function filePart(v){return String(v||'').trim().replace(/[\\/:*?"<>|\x00-\x1f]/g,'_').replace(/\s+/g,'-').slice(0,70);}
+  function filename(info, part){
+    return window.AvaliaPdfFilename({...info, term:boot?.term, form:formCode},part);
+  }
   function download(blob,name) { const uri=URL.createObjectURL(blob), a=document.createElement('a');a.href=uri;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(uri),30000); }
   async function standalone(blob,name){
     const file=new File([blob],name,{type:'application/pdf'});
@@ -187,7 +189,7 @@
           const data={generalInformation:{studentName:$id('studentName').value,professorName:$id('professorName').value,period:form.querySelector('input[name=period]:checked').value,date:$id(isP?'previaDate':'date').value,time:$id(isP?'previaTime':'time').value},evaluation:{},signature:window.signature.getSignatureImage()};
           group.forEach((el,i)=>data.evaluation['presentationRubric'+(i+1)]=Number(el.value));data.evaluation.finalValue=group.reduce((sum,el)=>sum+Math.round(Number(el.value)*10),0)/10;
           const gen=isP?new GeneratePreviaPDF():new GeneratePDF();const blob=await makeBlob(gen.getDefinition(data));
-          const name='ficha-avaliacao-'+(isP?'andamento':'defesa')+'-'+filePart(data.generalInformation.studentName)+'-prof-'+filePart(data.generalInformation.professorName)+'.pdf';docs.push({blob,name,grade:data.evaluation.finalValue});}
+          const name=filename(data.generalInformation,type);docs.push({blob,name,grade:data.evaluation.finalValue});}
         if(snapshot!==revision)return;
         const panel=$id('integratedDownloads');panel.replaceChildren();panel.hidden=false;
         for(const doc of docs){const link=document.createElement('button');link.type='button';link.className='btn-flat indigo-text';link.textContent='Baixar '+doc.name;link.addEventListener('click',()=>download(doc.blob,doc.name));panel.append(link);}
@@ -207,7 +209,7 @@
       const generator=new GeneratePDF();const data=generator.getData();
       const blob=await makeBlob(generator.getDefinition(data));
       if(snapshot!==revision){message('O formulário mudou. Gere o PDF novamente.','error');return;}
-      const name='ficha-avaliacao-tcc-'+filePart(data.generalInformation.studentName)+'-prof-'+filePart(data.generalInformation.professorName)+'.pdf';
+      const name=filename(data.generalInformation);
       if(!managed){await standalone(blob,name);message(invitation?'PDF gerado localmente. O envio direto não está disponível.':'PDF gerado.');return;}
       if(blob.size>maxPdf){download(blob,name);message('O PDF excede 5 MB e não pode ser enviado. Reduza a imagem da assinatura.','error');return;}
       pdfBlob=blob;pdfName=name;currentGrade=Number(data.evaluation.finalValue);pdfUrl=URL.createObjectURL(blob);frame.src=pdfUrl;review.hidden=false;message('PDF pronto. Confira os dados e envie a avaliação.');review.scrollIntoView({block:'start',behavior:'smooth'});

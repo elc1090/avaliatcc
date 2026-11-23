@@ -5,6 +5,7 @@
  const $=id=>document.getElementById(id), config=window.AVALIA_CONFIG||{};
  const query=new URLSearchParams(location.search), token=new URLSearchParams(location.hash.slice(1)).get('t')||query.get('t');
  const managed=Boolean(token);let valid=false,sent=false,busy=false,blob=null,revision=0,renderedAt=-1,blobUrl='',gradePrefill=null,formChangedSinceText=false;
+ let academicTerm, academicPeriod;
  const fields=['title','studentName','course','date','time','defenseMode','location','outcome','deadline'];
  const text=id=>String($(id).value||'').trim();
  function status(msg,err=false){$('ataStatus').textContent=msg;$('ataStatus').dataset.error=String(err);}
@@ -40,6 +41,8 @@
    if(res.status==='already_received'){sent=true;status('Esta ata já foi recebida. Recibo: '+res.receipt);return;}
    if(res.status!=='valid')throw Error(res.message||'Convite indisponível.');
    valid=true;
+   academicTerm=res.term;
+   academicPeriod=res.period;
    const map={studentName:res.studentName,course:res.course,title:res.title,time:res.time,defenseMode:res.defenseMode,location:res.location};
    for(const [id,value] of Object.entries(map))if(value)$(id).value=value;
    for(const [id,value] of [['date',res.date],['deadline',res.deadline]])if(value)$(id).value=isoDate(value);
@@ -88,7 +91,12 @@
   if(blob.size>5*1024*1024)throw Error('PDF acima de 5 MB.');renderedAt=revision;return blob;
  }
  function downloadPdf(blob,filename){const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=filename;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),30000);}
- function fileName(){return 'ata-'+(text('course')==='Sistemas de Informação'?'si':'cc')+'-'+text('studentName').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-zA-Z0-9]+/g,'-').replace(/^-|-$/g,'').toLowerCase()+'.pdf';}
+ function fileName(){
+  return window.AvaliaPdfFilename({
+   term:academicTerm,period:academicPeriod,date:text('date'),studentName:text('studentName'),
+   form:text('course')==='Sistemas de Informação'?'SI-ATA':'CC-ATA'
+  });
+ }
  async function checkPlaceholders(){const s=$('narrative').value;return !/\[(?:informar nota|data final prevista no calendário|[^\]]+)\]/.test(s)||await window.AvaliaDialog.confirm('Texto incompleto','O texto ainda contém marcadores entre colchetes. Deseja continuar mesmo assim?','Continuar com marcadores','Revisar texto');}
  async function previewPdf(kind){if(!available()||!(await checkFreshText())||!(await checkPlaceholders()))return;
   try{window.AvaliaDialog.progress('Preparando documento','Gerando PDF…');const pdf=await makeBlob();window.AvaliaDialog.close();
