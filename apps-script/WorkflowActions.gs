@@ -159,7 +159,7 @@ function grantEvaluationViewer_(id, address) {
     token = response.nextPageToken;
   } while (token);
   Drive.Permissions.create({type: 'user', role: 'reader', emailAddress: email}, id,
-    {supportsAllDrives: true, sendNotificationEmail: false});
+    {supportsAllDrives: true, sendNotificationEmail: true});
 }
 
 function retryEvaluationSharing() {
