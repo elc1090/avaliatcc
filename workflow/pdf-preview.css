@@ -1,0 +1,9 @@
+.avalia-pdf-preview canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin: 0 auto 12px;
+  border: 1px solid #d9dce3;
+  background: white;
+  box-sizing: border-box;
+}

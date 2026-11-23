@@ -4,7 +4,7 @@
  const form=document.querySelector('#ataForm');if(!form)return;
  const $=id=>document.getElementById(id), config=window.AVALIA_CONFIG||{};
  const query=new URLSearchParams(location.search), token=new URLSearchParams(location.hash.slice(1)).get('t')||query.get('t');
- const managed=Boolean(token);let valid=false,sent=false,busy=false,blob=null,revision=0,renderedAt=-1,blobUrl='',gradePrefill=null,formChangedSinceText=false;
+ const managed=Boolean(token);let valid=false,sent=false,busy=false,blob=null,revision=0,renderedAt=-1,gradePrefill=null,formChangedSinceText=false;
  let academicTerm, academicPeriod;
  const fields=['title','studentName','course','date','time','defenseMode','location','outcome','deadline'];
  const text=id=>String($(id).value||'').trim();
@@ -25,7 +25,7 @@
  }
  function relabel(){[...document.querySelectorAll('.examiner-row label')].forEach((l,i)=>l.firstChild.textContent=i?'Membro examinador '+(i+1):'Avaliador 1 · orientador(a) e presidente');}
  function examiners(){return [...document.querySelectorAll('.examiner-name')].map(el=>el.value.trim()).filter(Boolean);}
- function invalidate(){revision++;blob=null;renderedAt=-1;if(blobUrl)URL.revokeObjectURL(blobUrl);blobUrl='';$('pdfViewer').hidden=true;}
+ function invalidate(){revision++;blob=null;renderedAt=-1;const viewer=$('pdfViewer');window.AvaliaPdfPreview.clear(viewer);viewer.hidden=true;}
  function available(){return !busy&&!sent;}
  async function api(action,data){if(!config.managedEndpoint)throw Error('Serviço não configurado.');
   const c=new AbortController(), timer=setTimeout(()=>c.abort(),action==='validate'?20000:110000);
@@ -100,8 +100,8 @@
  async function checkPlaceholders(){const s=$('narrative').value;return !/\[(?:informar nota|data final prevista no calendário|[^\]]+)\]/.test(s)||await window.AvaliaDialog.confirm('Texto incompleto','O texto ainda contém marcadores entre colchetes. Deseja continuar mesmo assim?','Continuar com marcadores','Revisar texto');}
  async function previewPdf(kind){if(!available()||!(await checkFreshText())||!(await checkPlaceholders()))return;
   try{window.AvaliaDialog.progress('Preparando documento','Gerando PDF…');const pdf=await makeBlob();window.AvaliaDialog.close();
-   if(kind==='download')downloadPdf(pdf,fileName());else{if(blobUrl)URL.revokeObjectURL(blobUrl);blobUrl=URL.createObjectURL(pdf);$('pdfViewer').src=blobUrl;$('pdfViewer').hidden=false;}
-   status('Documento pronto. Você pode baixar o PDF mesmo que a prévia não apareça neste navegador.');
+   if(kind==='download')downloadPdf(pdf,fileName());else{const viewer=$('pdfViewer');viewer.hidden=false;window.AvaliaPdfPreview.show(viewer,pdf);}
+   status('Documento pronto.');
   }catch(e){window.AvaliaDialog.result('Não foi possível gerar o PDF',e.message,false);status(e.message,true);}
  }
  async function submit(){if(!managed||!valid||!available()||!(await checkFreshText())||!(await checkPlaceholders()))return;

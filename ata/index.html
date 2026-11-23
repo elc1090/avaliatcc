@@ -2,6 +2,7 @@
 <html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Ata de defesa · Avalia TG</title>
 <link rel="stylesheet" href="../workflow/ata.css?v=5"><link rel="stylesheet" href="../workflow/dialog.css?v=5">
+<link rel="stylesheet" href="../workflow/pdf-preview.css?v=1">
 </head><body>
 <main class="ata-layout">
 <a href="../index.html" class="back">← Todos os formulários</a>
@@ -27,10 +28,10 @@
 <p class="hint">O título e os nomes da banca são formatados separadamente no PDF. A nota aparece dentro do texto editável.</p></section>
 <section class="card"><h2>Documento</h2><p class="hint">A prévia pode não aparecer em alguns celulares. O botão Baixar PDF funciona de forma independente.</p>
 <div class="actions"><button type="button" id="preview" class="quiet">Visualizar PDF</button><button type="button" id="download" class="primary">Baixar PDF</button><button type="button" id="sendAta" class="primary" hidden disabled>Enviar ata ao Drive</button></div>
-<iframe id="pdfViewer" hidden title="Prévia da ata" class="pdfviewer"></iframe>
+<div id="pdfViewer" hidden class="avalia-pdf-preview"></div>
 </section>
 </form></main>
 <script src="../workflow/pdfmake/pdfmake.min.js"></script>
 <script src="../workflow/pdfmake/vfs_fonts.js"></script>
-<script src="../workflow/config.js?v=5"></script><script src="../workflow/dialog.js?v=5"></script><script src="../workflow/pdf-filename.js?v=1"></script><script src="../workflow/ata.js?v=6"></script>
+<script src="../workflow/config.js?v=5"></script><script src="../workflow/dialog.js?v=5"></script><script src="../workflow/pdf-filename.js?v=1"></script><script src="../workflow/pdf-preview.js?v=1"></script><script src="../workflow/ata.js?v=7"></script>
 </body></html>
